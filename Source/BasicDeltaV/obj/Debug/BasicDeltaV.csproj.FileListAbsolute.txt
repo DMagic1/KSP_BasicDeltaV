@@ -1,0 +1,13 @@
+C:\Users\david\Documents\Visual Studio 2015\Projects\BasicDeltaV\BasicDeltaV\obj\Debug\BasicDeltaV.csprojResolveAssemblyReference.cache
+C:\Users\david\documents\visual studio 2015\Projects\BasicDeltaV\BasicDeltaV\Output\BasicDeltaV.dll
+C:\Users\david\documents\visual studio 2015\Projects\BasicDeltaV\BasicDeltaV\Output\BasicDeltaV.pdb
+C:\Users\david\documents\visual studio 2015\Projects\BasicDeltaV\BasicDeltaV\Output\BasicDeltaV.Unity.pdb
+C:\Users\david\documents\visual studio 2015\Projects\BasicDeltaV\BasicDeltaV\obj\Debug\BasicDeltaV.dll
+C:\Users\david\documents\visual studio 2015\Projects\BasicDeltaV\BasicDeltaV\obj\Debug\BasicDeltaV.pdb
+C:\Users\DMagic\Documents\Visual Studio 2013\Projects\BasicDeltaV\BasicDeltaV\Output\BasicDeltaV.dll
+C:\Users\DMagic\Documents\Visual Studio 2013\Projects\BasicDeltaV\BasicDeltaV\Output\BasicDeltaV.pdb
+C:\Users\DMagic\Documents\Visual Studio 2013\Projects\BasicDeltaV\BasicDeltaV\Output\BasicDeltaV.Unity.pdb
+C:\Users\DMagic\Documents\Visual Studio 2013\Projects\BasicDeltaV\BasicDeltaV\obj\Debug\BasicDeltaV.csprojResolveAssemblyReference.cache
+C:\Users\DMagic\Documents\Visual Studio 2013\Projects\BasicDeltaV\BasicDeltaV\obj\Debug\BasicDeltaV.dll
+C:\Users\DMagic\Documents\Visual Studio 2013\Projects\BasicDeltaV\BasicDeltaV\obj\Debug\BasicDeltaV.pdb
+C:\Users\DMagic\Documents\Visual Studio 2013\Projects\BasicDeltaV\BasicDeltaV\Output\BasicDeltaV.Unity.dll

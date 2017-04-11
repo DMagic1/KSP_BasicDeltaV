@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<KSPBundleDefinition xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" UrlName="basic_orbit_prefabs" Name="basic_orbit_prefabs" CreatedTime="-8587246156955964493">
+  <Author />
+  <Info />
+  <Assets>
+    <Asset Name="BasicOrbit_AppLauncher" Path="Assets/Prefabs/BasicOrbit_AppLauncher.prefab" Type="GameObject" Url="Prefabs/BasicOrbit_AppLauncher" AutoLoad="false" />
+    <Asset Name="BasicOrbit_Module" Path="Assets/Prefabs/BasicOrbit_Module.prefab" Type="GameObject" Url="Prefabs/BasicOrbit_Module" AutoLoad="false" />
+    <Asset Name="BasicOrbit_Panel" Path="Assets/Prefabs/BasicOrbit_Panel.prefab" Type="GameObject" Url="Prefabs/BasicOrbit_Panel" AutoLoad="false" />
+    <Asset Name="BasicOrbit_Settings" Path="Assets/Prefabs/BasicOrbit_Settings.prefab" Type="GameObject" Url="Prefabs/BasicOrbit_Settings" AutoLoad="false" />
+    <Asset Name="BasicOrbit_SettingsModule" Path="Assets/Prefabs/BasicOrbit_SettingsModule.prefab" Type="GameObject" Url="Prefabs/BasicOrbit_SettingsModule" AutoLoad="false" />
+  </Assets>
+  <Dependencies />
+</KSPBundleDefinition>

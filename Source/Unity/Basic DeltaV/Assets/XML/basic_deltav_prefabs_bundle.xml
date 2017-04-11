@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<KSPBundleDefinition xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" UrlName="basic_deltav_prefabs" Name="basic_deltav_prefabs" CreatedTime="-8587097704380557487">
+  <Author />
+  <Info />
+  <Assets>
+    <Asset Name="BasicDeltaV_AppWindow" Path="Assets/Prefabs/BasicDeltaV_AppWindow.prefab" Type="GameObject" Url="Prefabs/BasicDeltaV_AppWindow" AutoLoad="false" />
+    <Asset Name="BasicDeltaV_BodySelection" Path="Assets/Prefabs/BasicDeltaV_BodySelection.prefab" Type="GameObject" Url="Prefabs/BasicDeltaV_BodySelection" AutoLoad="false" />
+    <Asset Name="BasicDeltaV_Panel" Path="Assets/Prefabs/BasicDeltaV_Panel.prefab" Type="GameObject" Url="Prefabs/BasicDeltaV_Panel" AutoLoad="false" />
+    <Asset Name="BasivDeltaV_Module" Path="Assets/Prefabs/BasivDeltaV_Module.prefab" Type="GameObject" Url="Prefabs/BasivDeltaV_Module" AutoLoad="false" />
+  </Assets>
+  <Dependencies />
+</KSPBundleDefinition>

@@ -1,0 +1,31 @@
+{
+     "NAME":"Basic DeltaV",
+	 "URL":"https://raw.githubusercontent.com/DMagic1/KSP_BasicDeltaV/master/GameData/BasicDeltaV/BasicDeltaV.version",
+	 "DOWNLOAD":"https://github.com/DMagic1/KSP_BasicDeltaV/releases",
+     "GITHUB":{
+         "USERNAME":"DMagic1",
+         "REPOSITORY":"KSP_BasicDeltaV",
+         "ALLOW_PRE_RELEASE":false,
+     },
+     "VERSION":{
+         "MAJOR":1,
+         "MINOR":0,
+         "PATCH":3,
+         "BUILD":0
+     },
+     "KSP_VERSION":{
+         "MAJOR":1,
+         "MINOR":3,
+         "PATCH":0
+     },
+     "KSP_VERSION_MIN":{
+         "MAJOR":1,
+         "MINOR":3,
+         "PATCH":0
+     },
+     "KSP_VERSION_MAX":{
+         "MAJOR":1,
+         "MINOR":3,
+         "PATCH":99
+     }
+ } 
