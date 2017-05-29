@@ -88,7 +88,7 @@ namespace BasicDeltaV
 			modules.Clear();
 
 			if (BasicDeltaV_Settings.Instance.ShowDeltaV)
-				modules.Add(new BasicDeltaV_DeltaV("dV", this));
+				modules.Add(new BasicDeltaV_DeltaV("ΔV", this));
 
 			if (BasicDeltaV_Settings.Instance.ShowTWR)
 				modules.Add(new BasicDeltaV_TWR("TWR", this));
