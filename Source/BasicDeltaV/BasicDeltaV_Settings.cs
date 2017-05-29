@@ -48,7 +48,7 @@ namespace BasicDeltaV
         [Persistent]
         public bool ShowISP = true;
         [Persistent]
-        public bool ShowBodies = true;
+        public bool ShowBodies = false;
         [Persistent]
 		public bool ShowAtmosphere = false;
 		[Persistent]
