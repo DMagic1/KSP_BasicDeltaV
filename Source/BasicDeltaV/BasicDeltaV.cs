@@ -142,6 +142,9 @@ namespace BasicDeltaV
 			if (!_loaded)
 				return;
 
+			if (!BasicDeltaV_Settings.Instance.DisplayActive)
+				return;
+
 			if (stages != null)
 			{
 				stagesCount = 0;
@@ -222,6 +225,18 @@ namespace BasicDeltaV
                 _currentBody = BodyFromName(BasicDeltaV_Settings.Instance.CelestialBody);
             }
         }
+
+		public bool DisplayActive
+		{
+			get { return BasicDeltaV_Settings.Instance.DisplayActive; }
+			set
+			{
+				BasicDeltaV_Settings.Instance.DisplayActive = value;
+
+				if (panelHandler != null && value == false)
+					panelHandler.PanelHideDisplay();
+			}
+		}
         
         public bool ShowDeltaV
         {
@@ -452,25 +467,25 @@ namespace BasicDeltaV
                 {
                     CelestialBody body = orderedPlanets[i];
 
-                    orderedBodies.Add(body.displayName, 4);
+                    orderedBodies.Add(body.displayName.LocalizeBodyName(), 4);
 
                     for (int j = 0; j < body.orbitingBodies.Count; j++)
                     {
                         CelestialBody moon = body.orbitingBodies[j];
 
-                        orderedBodies.Add(moon.displayName, 12);
+						orderedBodies.Add(moon.displayName.LocalizeBodyName(), 12);
 
                         for (int k = 0; k < moon.orbitingBodies.Count; k++)
                         {
                             CelestialBody subMoon = moon.orbitingBodies[k];
 
-							orderedBodies.Add(subMoon.displayName, 18);
+							orderedBodies.Add(subMoon.displayName.LocalizeBodyName(), 18);
 
                             for (int l = 0; l < subMoon.orbitingBodies.Count; l++)
                             {
                                 CelestialBody subSubMoon = subMoon.orbitingBodies[l];
 
-								orderedBodies.Add(subSubMoon.displayName, 24);
+								orderedBodies.Add(subSubMoon.displayName.LocalizeBodyName(), 24);
                             }
                         }
                     }
@@ -496,7 +511,7 @@ namespace BasicDeltaV
             {
                 CelestialBody b = FlightGlobals.Bodies[i];
 
-                if (b.displayName == display)
+				if (b.displayName.LocalizeBodyName() == display)
                     return b.bodyName;
             }
 
@@ -510,7 +525,7 @@ namespace BasicDeltaV
                 CelestialBody b = FlightGlobals.Bodies[i];
 
                 if (b.bodyName == bodyName)
-                    return b.displayName;
+					return b.displayName.LocalizeBodyName();
             }
 
             return bodyName;
