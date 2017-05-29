@@ -46,12 +46,18 @@ namespace BasicDeltaV.Modules
 
 		private string result(double thrust)
         {
-			if (thrust < 50)
+			if (thrust < 10)
+				return string.Format("{0:N3}kN", thrust);
+			else if (thrust < 100)
 				return string.Format("{0:N2}kN", thrust);
 			else if (thrust < 1000)
 				return string.Format("{0:N1}kN", thrust);
-			else
+			else if (thrust < 10000)
 				return string.Format("{0:N0}kN", thrust);
+			else if (thrust < 100000)
+				return string.Format("{0:N2}MN", thrust / 1000);
+			else
+				return string.Format("{0:N1}MN", thrust / 1000);
         }
     }
 }

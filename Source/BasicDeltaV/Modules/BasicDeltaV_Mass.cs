@@ -50,10 +50,7 @@ namespace BasicDeltaV.Modules
 			if (mass >= 100f || tot >= 100f)
 				return string.Format("{0:N2}/{1:N2}t", mass, tot);
 
-			mass *= 1000.0;
-			tot *= 1000.0;
-
-			return string.Format("{0:N0}/{1:N0}kg", mass, tot);
+			return string.Format("{0:N0}/{1:N0}kg", mass * 1000, tot * 1000);
         }
     }
 }

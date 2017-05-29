@@ -40,7 +40,7 @@ namespace BasicDeltaV.Modules
 				return "---";
 
 			double dv = _panel.Stage.deltaV;
-			double total = _panel.Stage.totalDeltaV;
+			double total = _panel.Stage.inverseTotalDeltaV;
 
 			return result(dv, total);
         }

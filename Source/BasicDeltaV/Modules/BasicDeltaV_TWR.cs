@@ -46,8 +46,13 @@ namespace BasicDeltaV.Modules
         }
 
         private string result(double twr, double max)
-        {
-            return string.Format("{0:F1}({1:F1})", twr, max);
+		{	
+			if (twr < 10 || max < 10)
+				return string.Format("{0:F2}({1:F2})", twr, max);
+			else if (twr < 100 || max < 100)
+				return string.Format("{0:F1}({1:F1})", twr, max);
+
+            return string.Format("{0:F0}({1:F0})", twr, max);
         }
     }
 }
