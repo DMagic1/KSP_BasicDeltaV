@@ -33,6 +33,8 @@ namespace BasicDeltaV
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class BasicDeltaV_Settings : MonoBehaviour
     {
+		[Persistent]
+		public bool DisplayActive = true;
         [Persistent]
         public bool ShowDeltaV = true;
         [Persistent]

@@ -40,6 +40,8 @@ namespace BasicDeltaV.Unity.Unity
 		private float m_MaxHeight = 560;
         [SerializeField]
         private TextHandler m_VersionText = null;
+		[SerializeField]
+		private StateToggle m_DisplayToggle = null;
         [SerializeField]
         private Toggle m_BodyToggle = null;
         [SerializeField]
@@ -213,6 +215,9 @@ namespace BasicDeltaV.Unity.Unity
             if (m_VersionText != null)
                 m_VersionText.OnTextUpdate.Invoke(basic.Version);
 
+			if (m_DisplayToggle != null)
+				m_DisplayToggle.isOn = basic.DisplayActive;
+
             if (m_BodyTitle != null)
                 m_BodyTitle.OnTextUpdate.Invoke(basic.CurrentBody);
 
@@ -319,6 +324,12 @@ namespace BasicDeltaV.Unity.Unity
             Destroy(gameObject);
         }
 
+		public void SetDisplayToggle(bool isOn)
+		{
+			if (m_DisplayToggle != null)
+				m_DisplayToggle.isOn = isOn;
+		}
+
 		public void SetStagingScale(float scale)
 		{
 			loaded = false;
@@ -330,6 +341,14 @@ namespace BasicDeltaV.Unity.Unity
 				m_StageScaleText.OnTextUpdate.Invoke(scale.ToString("P0"));
 
 			loaded = true;
+		}
+
+		public void ToggleDisplayActive(bool isOn)
+		{
+			if (basicInterface == null || !loaded)
+				return;
+
+			basicInterface.DisplayActive = isOn;
 		}
         
         public void ToggleBodySelection(bool isOn)

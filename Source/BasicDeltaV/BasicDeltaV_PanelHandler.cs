@@ -243,6 +243,16 @@ namespace BasicDeltaV
 			}
 		}
 
+		public void PanelHideDisplay()
+		{
+			for (int i = panels.Count - 1; i >= 0; i--)
+			{
+				BasicDeltaV_StagePanel panel = panels.At(i);
+
+				panel.SetVisible(false);
+			}
+		}
+
 		public void UpdatePanels()
 		{
 			var enumerator = panels.Keys.GetEnumerator();

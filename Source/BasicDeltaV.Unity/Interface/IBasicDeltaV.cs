@@ -35,6 +35,8 @@ namespace BasicDeltaV.Unity.Interface
         string Version { get; }
 
         string CurrentBody { get; set; }
+
+		bool DisplayActive { get; set; }
         
         bool ShowDeltaV { get; set; }
 

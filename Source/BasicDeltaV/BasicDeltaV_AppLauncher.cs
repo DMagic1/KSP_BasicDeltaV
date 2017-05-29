@@ -23,6 +23,7 @@
  */
 #endregion
 
+using System;
 using System.Collections;
 using BasicDeltaV.Unity.Unity;
 using KSP.UI;
@@ -93,6 +94,8 @@ namespace BasicDeltaV
 
             GameEvents.onGUIApplicationLauncherUnreadifying.Add(RemoveButton);
 
+			button.onRightClick = (Callback)Delegate.Combine(button.onRightClick, new Callback(OnRightClick));
+
             buttonAdder = null;
         }
 
@@ -112,6 +115,14 @@ namespace BasicDeltaV
 
             launcher.transform.position = GetAnchor();
         }
+
+		private void OnRightClick()
+		{
+			BasicDeltaV.Instance.DisplayActive = !BasicDeltaV.Instance.DisplayActive;
+
+			if (launcher != null)
+				launcher.SetDisplayToggle(BasicDeltaV.Instance.DisplayActive);
+		}
 
         private void OnTrue()
         {
