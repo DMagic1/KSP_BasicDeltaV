@@ -37,7 +37,7 @@ namespace BasicDeltaV
 	[KSPAddon(KSPAddon.Startup.EditorAny, false)]
 	public class BasicDeltaV_Loader : MonoBehaviour
 	{
-		private const string bundleName = "/basic_deltav_prefabs.ksp";
+		private const string bundleName = "/basic_deltav_prefabs";
 		private const string bundlePath = "GameData/BasicDeltaV/Resources";
 
 		private static bool loaded;
