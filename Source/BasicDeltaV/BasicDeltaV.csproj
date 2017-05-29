@@ -56,6 +56,7 @@
     <Compile Include="BasicDeltaV_TextMeshPro.cs" />
     <Compile Include="BasicDeltaV_UIAppHandler.cs" />
     <Compile Include="Extensions\PartExtensions.cs" />
+    <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Helpers\Averager.cs" />
     <Compile Include="Helpers\ForceAccumulator.cs" />
     <Compile Include="Helpers\BasicLogger.cs" />
