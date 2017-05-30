@@ -70,7 +70,9 @@ namespace BasicDeltaV
 				button.onHoverOut = (Callback)Delegate.Combine(button.onHoverOut, new Callback(OnContractHoverOut));
 				button.onFalse = (Callback)Delegate.Combine(button.onFalse, new Callback(OnContractClosed));
 
-				GenericAppFrame appframe = typeof(ContractsApp).GetField("appFrame", BindingFlags.NonPublic | BindingFlags.Instance).GetValue((ContractsApp)app) as GenericAppFrame;
+				var fields = typeof(ContractsApp).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
+
+				GenericAppFrame appframe = fields[7].GetValue((ContractsApp)app) as GenericAppFrame;
 
 				if (appframe != null)
 					appframe.AddGlobalInputDelegate(new UnityAction<PointerEventData>(OnAppEnter), new UnityAction<PointerEventData>(OnAppExit));
@@ -83,7 +85,9 @@ namespace BasicDeltaV
 				button.onHoverOut = (Callback)Delegate.Combine(button.onHoverOut, new Callback(OnEngineerHoverOut));
 				button.onFalse = (Callback)Delegate.Combine(button.onFalse, new Callback(OnEngineerClosed));
 
-				GenericAppFrame appframe = typeof(EngineersReport).GetField("appFrame", BindingFlags.NonPublic | BindingFlags.Instance).GetValue((EngineersReport)app) as GenericAppFrame;
+				var fields = typeof(EngineersReport).GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
+
+				GenericAppFrame appframe = fields[1].GetValue((EngineersReport)app) as GenericAppFrame;
 
 				if (appframe != null)
 					appframe.AddGlobalInputDelegate(new UnityAction<PointerEventData>(OnAppEnter), new UnityAction<PointerEventData>(OnAppExit));

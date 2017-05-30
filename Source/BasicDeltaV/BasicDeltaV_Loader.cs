@@ -23,8 +23,10 @@
  */
 #endregion
 
+using System;
 using System.Collections;
 using System.Reflection;
+using System.Linq;
 using BasicDeltaV.Unity;
 using UnityEngine;
 using UnityEngine.UI;
@@ -141,11 +143,20 @@ namespace BasicDeltaV
 			GenericCascadingList cascadingList = null;
 			UIListItem_spacer spacer = null;
 
-			appFrame = typeof(ContractsApp).GetField("appFramePrefab", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(prefab) as GenericAppFrame;
+			try
+			{
+				var fields = typeof(ContractsApp).GetFields(BindingFlags.NonPublic | BindingFlags.Instance).ToArray();
 
-			cascadingList = typeof(ContractsApp).GetField("cascadingListPrefab", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(prefab) as GenericCascadingList;
+				appFrame = fields[6].GetValue(prefab) as GenericAppFrame;
 
-			spacer = typeof(ContractsApp).GetField("listItem_BodyContractState_prefab", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(prefab) as UIListItem_spacer;
+				cascadingList = fields[8].GetValue(prefab) as GenericCascadingList;
+
+				spacer = fields[10].GetValue(prefab) as UIListItem_spacer;
+			}
+			catch (Exception e)
+			{
+				BasicDeltaV.BasicLogging("Error in processing toolbar panel UI: {0}", e);
+			}
 
 			if (appFrame != null)
 			{
