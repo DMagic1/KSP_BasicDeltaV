@@ -42,6 +42,8 @@ namespace BasicDeltaV.Unity.Unity
         private TextHandler m_VersionText = null;
 		[SerializeField]
 		private StateToggle m_DisplayToggle = null;
+		[SerializeField]
+		private StateToggle m_CurrentStage = null;
         [SerializeField]
         private Toggle m_BodyToggle = null;
         [SerializeField]
@@ -50,6 +52,8 @@ namespace BasicDeltaV.Unity.Unity
         private TextHandler m_BodyTitle = null;
         [SerializeField]
         private GameObject m_BodyBar = null;
+		[SerializeField]
+		private GameObject m_BodyControlBar = null;
         [SerializeField]
         private GameObject m_BodyPrefab = null;
 		[SerializeField]
@@ -72,6 +76,8 @@ namespace BasicDeltaV.Unity.Unity
         private GameObject m_ModuleBar = null;
         [SerializeField]
 		private StateToggle m_DeltaVToggle = null;
+		//[SerializeField]
+		//private StateToggle m_VesselDeltaVToggle = null;
         [SerializeField]
 		private StateToggle m_TWRToggle = null;
         [SerializeField]
@@ -98,6 +104,10 @@ namespace BasicDeltaV.Unity.Unity
 		private Slider m_StageScaleSlider = null;
         [SerializeField]
         private Slider m_ToolbarScaleSlider = null;
+		[SerializeField]
+		private EventTrigger m_TopEventHandler = null;
+		[SerializeField]
+		private EventTrigger m_BottomEventHandler = null;
         
         private IBasicDeltaV basicInterface;
         private RectTransform rect;
@@ -176,6 +186,17 @@ namespace BasicDeltaV.Unity.Unity
 			checkMaxResize(rect.sizeDelta.y + ((PointerEventData)eventData).delta.y);
 		}
 
+		public void OnResizeFlight(BaseEventData eventData)
+		{
+			if (rect == null)
+				return;
+
+			if (!(eventData is PointerEventData))
+				return;
+
+			checkMaxResize(rect.sizeDelta.y - ((PointerEventData)eventData).delta.y);
+		}
+
 		public void OnEndResize(BaseEventData eventData)
 		{
 			if (!(eventData is PointerEventData))
@@ -189,7 +210,10 @@ namespace BasicDeltaV.Unity.Unity
 			if (basicInterface == null)
 				return;
 
-			basicInterface.Height = rect.sizeDelta.y;
+			if (basicInterface.Flight)
+				basicInterface.FlightHeight = rect.sizeDelta.y;
+			else
+				basicInterface.Height = rect.sizeDelta.y;
 		}
 
 		private void checkMaxResize(float num)
@@ -218,6 +242,13 @@ namespace BasicDeltaV.Unity.Unity
 			if (m_DisplayToggle != null)
 				m_DisplayToggle.isOn = basic.DisplayActive;
 
+			if (m_CurrentStage != null)
+			{
+				m_CurrentStage.isOn = basic.CurrentStageOnly;
+
+				m_CurrentStage.gameObject.SetActive(basic.ShowCurrentStageBar);
+			}
+
             if (m_BodyTitle != null)
                 m_BodyTitle.OnTextUpdate.Invoke(basic.CurrentBody);
 
@@ -228,6 +259,9 @@ namespace BasicDeltaV.Unity.Unity
 
             if (m_BodyToggle != null)
                 m_BodyToggle.isOn = basic.ShowBodies;
+
+			if (m_BodyControlBar != null)
+				m_BodyControlBar.SetActive(basic.ShowBody);
 
             if (m_AtmosphereLegend != null)
                 m_AtmosphereLegend.OnTextUpdate.Invoke("|\n" + (basic.MaxDepth / 1000).ToString("N0") + "km");
@@ -279,7 +313,7 @@ namespace BasicDeltaV.Unity.Unity
                 m_ISPToggle.isOn = basic.ShowISP;
 
 			if (m_ModuleBar != null)
-				m_ModuleBar.SetActive(false);
+				m_ModuleBar.SetActive(basic.Flight);
 
 			if (m_AlphaSlider != null)
 				m_AlphaSlider.value = (1 - basic.Alpha) * 50;
@@ -288,7 +322,11 @@ namespace BasicDeltaV.Unity.Unity
 				m_AlphaText.OnTextUpdate.Invoke((1 - basic.Alpha).ToString("P0"));
 
 			if (m_StageScaleToggle != null)
+			{
 				m_StageScaleToggle.isOn = basic.StageScaleEditorOnly;
+
+				m_StageScaleToggle.gameObject.SetActive(!basic.Flight);
+			}
 
 			if (m_StageScaleSlider != null)
 				m_StageScaleSlider.value = basic.StageScale * 100;
@@ -303,11 +341,35 @@ namespace BasicDeltaV.Unity.Unity
 				m_ToolbarScaleText.OnTextUpdate.Invoke(basic.ToolbarScale.ToString("P0"));
 
 			if (m_SettingsBar != null)
-				m_SettingsBar.SetActive(false);
+				m_SettingsBar.SetActive(basic.Flight);
+
+			if (m_TopEventHandler != null)
+			{
+				if (basic.Flight)
+					Destroy(m_TopEventHandler);
+			}
+
+			if (m_BottomEventHandler != null)
+			{
+				if (!basic.Flight)
+					Destroy(m_BottomEventHandler);
+			}
+
+			if (basic.Flight)
+			{
+				if (rect != null)
+				{
+					rect.pivot = new Vector2(1, 1);
+
+					rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, rect.anchoredPosition.y + 60);
+
+					basicInterface.ClampToScreen(rect);
+				}
+			}
 
             transform.localScale = Vector3.one * basic.ToolbarScale;
 
-			checkMaxResize(basic.Height);
+			checkMaxResize(basic.Flight ? basic.FlightHeight : basic.Height);
 
             loaded = true;
         }
@@ -530,6 +592,14 @@ namespace BasicDeltaV.Unity.Unity
 
 			basicInterface.Alpha = a;
         }
+
+		public void ToggleCurrentStage(bool isOn)
+		{
+			if (basicInterface == null || !loaded)
+				return;
+
+			basicInterface.CurrentStageOnly = isOn;
+		}
 
 		public void StageScaleEditorOnly(bool isOn)
 		{
