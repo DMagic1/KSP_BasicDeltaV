@@ -24,6 +24,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
@@ -52,6 +53,8 @@ namespace BasicDeltaV
         [Persistent]
 		public bool ShowAtmosphere = false;
 		[Persistent]
+		public bool ShowCurrentStageOnly = false;
+		[Persistent]
 		public bool StageScaleEditorOnly = true;
         [Persistent]
         public string CelestialBody = "Kerbin";
@@ -63,6 +66,12 @@ namespace BasicDeltaV
         public float ToolbarScale = 1;
 		[Persistent]
 		public float WindowHeight = 280;
+		[Persistent]
+		public float FlightWindowHeight = 280;
+		[Persistent]
+		public string CrewRestrictionType = "RepairSkill";
+
+		public List<string> SkillTypes = new List<string>();
 
         private const string fileName = "PluginData/Settings.cfg";
         private string fullPath;
@@ -98,7 +107,24 @@ namespace BasicDeltaV
 				if (Save())
 					BasicDeltaV.BasicLogging("New Settings files generated at:\n{0}", fullPath);
 			}
+
+			SkillTypes = StringList(CrewRestrictionType);
         }
+
+		private List<string> StringList(string input)
+		{
+			string[] array = input.Split(',');
+			List<string> output = new List<string>();
+
+			for (int i = array.Length - 1; i >= 0; i--)
+			{
+				string s = array[i];
+
+				output.Add(s);
+			}
+
+			return output;
+		}
 
         public bool Load()
         {
