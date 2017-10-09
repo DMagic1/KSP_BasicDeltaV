@@ -32,6 +32,7 @@ namespace BasicDeltaV.Modules
         {
             _smallSize = false;
 			_fixedOrder = 1;
+			_simple = false;
         }
 
         protected override string fieldUpdate()
@@ -40,7 +41,13 @@ namespace BasicDeltaV.Modules
 				return "---";
 
 			double dv = _panel.Stage.deltaV;
-			double total = _panel.Stage.inverseTotalDeltaV;
+
+			double total = 0;
+
+			if (BasicDeltaV_Settings.Instance.ShowCurrentStageOnly && HighLogic.LoadedSceneIsFlight)
+				total = _panel.Stage.totalDeltaV;
+			else
+				total = _panel.Stage.inverseTotalDeltaV;
 
 			return result(dv, total);
         }
@@ -50,7 +57,7 @@ namespace BasicDeltaV.Modules
 			if (dv >= 10000f || tot >= 10000f)
 				return string.Format("{0:N2}/{1:N2}km/s", dv / 1000, tot / 1000);
 
-            return string.Format("{0:N0}/{1:N0}m/s", dv,tot);
+            return string.Format("{0:N0}/{1:N0}m/s", dv, tot);
         }
     }
 }
