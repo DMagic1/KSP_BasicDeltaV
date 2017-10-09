@@ -41,7 +41,12 @@ namespace BasicDeltaV
 
 		private void Start()
 		{
-			if (!HighLogic.LoadedSceneIsEditor)
+			if (HighLogic.LoadedSceneIsEditor && !BasicDeltaV.ReadoutsAvailable)
+			{
+				Destroy(this);
+				return;
+			}
+			else if (HighLogic.LoadedSceneIsFlight && !BasicDeltaV.AvailableInFlight)
 			{
 				Destroy(this);
 				return;
