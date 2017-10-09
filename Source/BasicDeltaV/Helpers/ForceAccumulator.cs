@@ -1,5 +1,5 @@
 // 
-//     Kerbal Engineer Redux
+//     Code From Kerbal Engineer Redux
 // 
 //     Copyright (C) 2014 CYBUTEK
 // 
