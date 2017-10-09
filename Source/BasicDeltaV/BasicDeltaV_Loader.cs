@@ -36,7 +36,7 @@ using KSP.UI.Screens;
 
 namespace BasicDeltaV
 {
-	[KSPAddon(KSPAddon.Startup.EditorAny, false)]
+	[KSPAddon(KSPAddon.Startup.FlightAndEditor, false)]
 	public class BasicDeltaV_Loader : MonoBehaviour
 	{
 		private const string bundleName = "/basic_deltav_prefabs";
@@ -46,7 +46,8 @@ namespace BasicDeltaV
 		private static bool TMPLoaded;
 		private static bool UILoaded;
 		private static bool spritesLoaded;
-		private static bool stageGroupProcessed;
+		private static bool stageEditorGroupProcessed;
+		private static bool stageFlightGroupProcessed;
 		private static bool UIappsProcessed;
 
 		private static GameObject[] loadedPrefabs;
@@ -85,36 +86,42 @@ namespace BasicDeltaV
 			if (!spritesLoaded)
 				loadSprites();
 
-			if (!stageGroupProcessed)
-				processStageGroup();
+			if (!stageEditorGroupProcessed && HighLogic.LoadedSceneIsEditor)
+				processEditorStageGroup();
+
+			if (!stageFlightGroupProcessed && HighLogic.LoadedSceneIsFlight)
+				processFlightStageGroup();
 
 			if (!UIappsProcessed)
 				processUIApps();
 
-			if (loadedPrefabs == null)
+			if (!TMPLoaded && !UILoaded)
 			{
-				string path = KSPUtil.ApplicationRootPath + bundlePath;
+				if (loadedPrefabs == null)
+				{
+					string path = KSPUtil.ApplicationRootPath + bundlePath;
 
-				AssetBundle prefabs = AssetBundle.LoadFromFile(path + bundleName);
+					AssetBundle prefabs = AssetBundle.LoadFromFile(path + bundleName);
 
-				if (prefabs != null)
-					loadedPrefabs = prefabs.LoadAllAssets<GameObject>();
-			}
+					if (prefabs != null)
+						loadedPrefabs = prefabs.LoadAllAssets<GameObject>();
+				}
 
-			if (loadedPrefabs != null)
-			{
-				if (!TMPLoaded)
-					processTMPPrefabs();
+				if (loadedPrefabs != null)
+				{
+					if (!TMPLoaded)
+						processTMPPrefabs();
 
-				if (UISkinManager.defaultSkin != null && !UILoaded)
-					processUIPrefabs();
+					if (UISkinManager.defaultSkin != null && !UILoaded)
+						processUIPrefabs();
+				}
 			}
 
 			if (TMPLoaded && UILoaded)
-			{
-				loaded = true;
 				BasicDeltaV.BasicLogging("UI Loaded and processed");
-			}
+
+			if (TMPLoaded && UILoaded && spritesLoaded && stageEditorGroupProcessed && stageFlightGroupProcessed && UIappsProcessed)
+				loaded = true;
 
 			Destroy(gameObject);
 		}
@@ -147,11 +154,11 @@ namespace BasicDeltaV
 			{
 				var fields = typeof(ContractsApp).GetFields(BindingFlags.NonPublic | BindingFlags.Instance).ToArray();
 
-				appFrame = fields[6].GetValue(prefab) as GenericAppFrame;
+				appFrame = fields[7].GetValue(prefab) as GenericAppFrame;
 
-				cascadingList = fields[8].GetValue(prefab) as GenericCascadingList;
+				cascadingList = fields[9].GetValue(prefab) as GenericCascadingList;
 
-				spacer = fields[10].GetValue(prefab) as UIListItem_spacer;
+				spacer = fields[11].GetValue(prefab) as UIListItem_spacer;
 			}
 			catch (Exception e)
 			{
@@ -174,7 +181,6 @@ namespace BasicDeltaV
 			if (spacer != null)
 			{
 				componentSprite = spacer.GetComponent<Image>().sprite;
-
 				UIStateImage stateImage = spacer.GetComponentInChildren<UIStateImage>();
 
 				selectedSprite = stateImage.states[1].sprite;
@@ -184,9 +190,9 @@ namespace BasicDeltaV
 			spritesLoaded = true;
 		}
 
-		private void processStageGroup()
+		private void processEditorStageGroup()
 		{
-			StageManager prefab = null;
+			StageManager prefabEditor = null;
 
 			var prefabs = Resources.FindObjectsOfTypeAll<StageManager>();
 
@@ -194,26 +200,58 @@ namespace BasicDeltaV
 			{
 				var pre = prefabs[i];
 
-				if (pre.name != "StageManagerEditor")
-					continue;
-
-				prefab = pre;
-				break;
+				if (pre.name == "StageManagerEditor")
+					prefabEditor = pre;
 			}
 
-			if (prefab == null)
+			if (prefabEditor == null)
 				return;
 
-			StageGroup group = prefab.stageGroupPrefab;
+			StageGroup group = prefabEditor.stageGroupPrefab;
 
-			Transform layout = group.transform.FindChild("IconLayout");
+			if (stageGroupSprite == null)
+			{
+				Transform layout = group.transform.FindChild("IconLayout");
 
-			if (layout != null)
-				stageGroupSprite = layout.GetComponent<Image>().sprite;
+				if (layout != null)
+					stageGroupSprite = layout.GetComponent<Image>().sprite;
+			}
 
 			group.gameObject.AddComponent<BasicDeltaV_StageGroupHandler>();
 
-			stageGroupProcessed = true;
+			stageEditorGroupProcessed = true;
+		}
+
+		private void processFlightStageGroup()
+		{
+			StageManager prefabFlight = null;
+
+			var prefabs = Resources.FindObjectsOfTypeAll<StageManager>();
+
+			for (int i = prefabs.Length - 1; i >= 0; i--)
+			{
+				var pre = prefabs[i];
+
+				if (pre.name == "StageManager")
+					prefabFlight = pre;
+			}
+
+			if (prefabFlight == null)
+				return;
+
+			StageGroup group = prefabFlight.stageGroupPrefab;
+
+			if (stageGroupSprite == null)
+			{
+				Transform layout = group.transform.FindChild("IconLayout");
+
+				if (layout != null)
+					stageGroupSprite = layout.GetComponent<Image>().sprite;
+			}
+
+			group.gameObject.AddComponent<BasicDeltaV_StageGroupHandler>();
+
+			stageFlightGroupProcessed = true;
 		}
 
 		private void processUIApps()
@@ -224,7 +262,7 @@ namespace BasicDeltaV
 			{
 				UIApp app = uiapps[i];
 
-				if (app.name == "ContractsApp" || app.name == "EngineersReport")// || app.name == "SMS")
+				if (app.name == "ContractsApp" || app.name == "EngineersReport")
 					app.gameObject.AddComponent<BasicDeltaV_UIAppHandler>();
 			}
 
