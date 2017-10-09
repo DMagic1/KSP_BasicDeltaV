@@ -34,21 +34,31 @@ namespace BasicDeltaV.Unity.Unity
     {
         [SerializeField]
         private GameObject m_ModulePrefab = null;
+		[SerializeField]
+		private LayoutGroup m_ContentLayout = null;
         [SerializeField]
         private Transform m_RowOneTransform = null;
         [SerializeField]
         private Transform m_RowTwoTransform = null;
         [SerializeField]
-        private Transform m_RowThreeTransform = null;
+		private Transform m_RowThreeTransform = null;
         [SerializeField]
 		private Image m_Background = null;
 		[SerializeField]
 		private Image m_Header = null;
 
+		private bool rightPos = false;
+		private bool shifted = false;
+
         private RectTransform rect;
 		private CanvasGroup cg;
         private List<BasicDeltaV_Module> Modules = new List<BasicDeltaV_Module>();
         
+		public bool RightPos
+		{
+			get { return rightPos; }
+		}
+
         private void Awake()
         {
             rect = GetComponent<RectTransform>();
@@ -74,12 +84,48 @@ namespace BasicDeltaV.Unity.Unity
             Destroy(gameObject);
         }
         
-        public void setPanel(List<IBasicModule> modules, float alpha)
+        public void setPanel(List<IBasicModule> modules, float alpha, bool right)
         {
             CreateModules(modules);
             
-            SetAlpha(alpha);            
+            SetAlpha(alpha);
+
+			if (right)
+			{
+				if (m_ContentLayout != null)
+					m_ContentLayout.childAlignment = TextAnchor.UpperLeft;
+
+				if (rect != null)
+				{
+					rect.pivot = new Vector2(0, 0);
+
+					rect.anchoredPosition = new Vector2(24, rect.anchoredPosition.y);
+				}
+			}	
         }
+
+		public void MovePanel(bool right)
+		{
+			int value = 0;
+
+			if (right && !rightPos)
+				value = 75;
+			else if (!right && rightPos)
+				value = -75;
+
+			if (rect != null)
+				rect.anchoredPosition = new Vector2(rect.anchoredPosition.x + value, rect.anchoredPosition.y);
+
+			rightPos = right;
+		}
+
+		public void MovePanelUp()
+		{
+			if (rect != null && !shifted)
+				rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, rect.anchoredPosition.y + 12);
+
+			shifted = true;
+		}
         
         public void SetAlpha(float a)
         {
@@ -146,7 +192,7 @@ namespace BasicDeltaV.Unity.Unity
 
             for (int i = 0; i < largeMods.Count; i++)
                 largeMods[i].Order = i + 1;
-            
+
             if (largeMods.Count == 0)
             {
                 for (int i = 0; i < smallMods.Count; i++)
@@ -195,6 +241,18 @@ namespace BasicDeltaV.Unity.Unity
                 for (int i = 0; i < smallMods.Count; i++)
                     smallMods[i].Order = (i * 2) + 1;
             }
+			//else if (largeMods.Count == 4)
+			//{
+			//	for (int i = 0; i < largeMods.Count - 1; i++)
+			//		largeMods[i].Order = (i + 1) * 2;
+
+			//	largeMods[3].Order = 7;
+
+			//	for (int i = 0; i < smallMods.Count; i++)
+			//		smallMods[i].Order = (i * 2) + 1;
+
+			//	shiftUp = true;
+			//}
 
             List<IBasicModule> orderedMods = new List<IBasicModule>();
 
