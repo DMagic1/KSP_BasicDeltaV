@@ -29,6 +29,7 @@ using BasicDeltaV.Unity.Unity;
 using BasicDeltaV.Modules;
 using BasicDeltaV.Simulation;
 using UnityEngine;
+using KSP.UI.Screens;
 
 namespace BasicDeltaV
 {
@@ -40,6 +41,19 @@ namespace BasicDeltaV
         private BasicDeltaV_Panel panel;
 		private Stage stage;
 		private int index;
+		private bool rightPos;
+	
+		public bool PanelRight
+		{
+			get
+			{
+				if (panel == null)
+					return rightPos;
+
+				return panel.RightPos;
+			}
+			set { rightPos = value; }
+		}
 
 		public Stage Stage
 		{
@@ -47,28 +61,39 @@ namespace BasicDeltaV
 			set { stage = value; }
 		}
 
-        public BasicDeltaV_StagePanel(RectTransform rect, int i)
+        public BasicDeltaV_StagePanel(RectTransform rect, int i, bool right, bool display)
         {
 			parent = rect;
 			index = i;
+			rightPos = right;
 
 			stage = BasicDeltaV.Instance.GetStage(i);
 
             StartModules();
 
-            CreatePanel();
+			CreatePanel(right, display && stage != null && stage.deltaV > 0);
         }
 
 		public void RefreshModules()
 		{
+			//BasicDeltaV.BasicLogging("Panel Refresh - Index: {0}/{1} - Status: {2} - Position: {3}", index, StageManager.LastStage, panel == null ? "Null" : "Valid", rightPos);
+
 			if (panel != null)
 				panel.Close();
 
 			panel = null;
 
+			bool display = true;
+
+			if (HighLogic.LoadedSceneIsFlight && BasicDeltaV_Settings.Instance.ShowCurrentStageOnly && index != StageManager.LastStage)
+				display = false;
+
 			StartModules();
 
-			CreatePanel();
+			if (panel != null)
+				rightPos = panel.RightPos;
+
+			CreatePanel(rightPos, stage != null && display && stage.deltaV > 0);
 		}
 
 		public void Destroy()
@@ -87,26 +112,26 @@ namespace BasicDeltaV
 		{
 			modules.Clear();
 
-			if (BasicDeltaV_Settings.Instance.ShowDeltaV)
+			if (BasicDeltaV_Settings.Instance.ShowDeltaV && !BasicDeltaV.Instance.ComplexRestrictions)
 				modules.Add(new BasicDeltaV_DeltaV("ΔV", this));
 
-			if (BasicDeltaV_Settings.Instance.ShowTWR)
+			if (BasicDeltaV_Settings.Instance.ShowTWR && stage != null && stage.deltaV > 0 && !BasicDeltaV.Instance.SimpleRestrictions)
 				modules.Add(new BasicDeltaV_TWR("TWR", this));
 
-			if (BasicDeltaV_Settings.Instance.ShowMass)
+			if (BasicDeltaV_Settings.Instance.ShowMass && !BasicDeltaV.Instance.SimpleRestrictions)
 				modules.Add(new BasicDeltaV_Mass("Mass", this));
 
-			if (BasicDeltaV_Settings.Instance.ShowBurnTime)
+			if (BasicDeltaV_Settings.Instance.ShowBurnTime && stage != null && stage.deltaV > 0 && !BasicDeltaV.Instance.ComplexRestrictions)
 				modules.Add(new BasicDeltaV_BurnTime("Burn Time", this));
 
-			if (BasicDeltaV_Settings.Instance.ShowISP)
+			if (BasicDeltaV_Settings.Instance.ShowISP && stage != null && stage.deltaV > 0 && !BasicDeltaV.Instance.ComplexRestrictions)
 				modules.Add(new BasicDeltaV_ISP("ISP", this));
 
-			if (BasicDeltaV_Settings.Instance.ShowThrust)
+			if (BasicDeltaV_Settings.Instance.ShowThrust && stage != null && stage.deltaV > 0 && !BasicDeltaV.Instance.SimpleRestrictions)
 				modules.Add(new BasicDeltaV_Thrust("Thrust", this));
         }
 
-        private void CreatePanel()
+        private void CreatePanel(bool right, bool display)
         {
             if (BasicDeltaV_Loader.PanelPrefab == null || modules == null || modules.Count == 0)
                 return;
@@ -119,10 +144,22 @@ namespace BasicDeltaV
             panel.transform.SetParent(parent, false);
 			panel.transform.SetAsFirstSibling();
 
-            panel.setPanel(modules, BasicDeltaV_Settings.Instance.PanelAlpha);
+            panel.setPanel(modules, BasicDeltaV_Settings.Instance.PanelAlpha, HighLogic.LoadedSceneIsFlight);
+			
+			if (right)
+				panel.MovePanel(true);
 
-			panel.gameObject.SetActive(false);
+			if (!display)
+				panel.gameObject.SetActive(false);
         }
+
+		public void MovePanel(bool right)
+		{
+			if (panel != null)
+				panel.MovePanel(right);
+
+			rightPos = right;
+		}
 
         public void SetAlpha(float alpha)
         {
