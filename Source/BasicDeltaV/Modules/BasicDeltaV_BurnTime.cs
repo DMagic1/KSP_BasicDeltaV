@@ -38,6 +38,7 @@ namespace BasicDeltaV.Modules
         {
             _smallSize = false;
             _fixedOrder = 2;
+			_simple = false;
         }
 
         protected override string fieldUpdate()

@@ -35,6 +35,7 @@ namespace BasicDeltaV.Modules
         protected bool _smallSize;
         protected int _order;
 		protected int _fixedOrder;
+		protected bool _simple;
 		protected BasicDeltaV_StagePanel _panel;
 
         public BasicDeltaV_Module(string t, BasicDeltaV_StagePanel p)
