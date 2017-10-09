@@ -30,52 +30,62 @@ using UnityEngine.UI;
 
 namespace BasicDeltaV.Unity.Interface
 {
-   public interface IBasicDeltaV
-    {
-        string Version { get; }
+	public interface IBasicDeltaV
+	{
+		string Version { get; }
 
-        string CurrentBody { get; set; }
+		string CurrentBody { get; set; }
+
+		bool Flight { get; }
 
 		bool DisplayActive { get; set; }
-        
-        bool ShowDeltaV { get; set; }
 
-        bool ShowTWR { get; set; }
+		bool ShowDeltaV { get; set; }
 
-        bool ShowBurnTime { get; set; }
+		bool ShowTWR { get; set; }
 
-        bool ShowISP { get; set; }
+		bool ShowBurnTime { get; set; }
 
-        bool ShowMass { get; set; }
+		bool ShowISP { get; set; }
 
-        bool ShowThrust { get; set; }
+		bool ShowMass { get; set; }
 
-        bool ShowBodies { get; set; }
+		bool ShowThrust { get; set; }
 
-        bool Atmosphere { get; set; }
+		bool ShowBodies { get; set; }
 
-        bool ShowAtmosphere { get; }
+		bool ShowBody { get; }
 
-        bool InMenu { get; set; }
+		bool Atmosphere { get; set; }
+
+		bool ShowAtmosphere { get; }
+
+		bool InMenu { get; set; }
 
 		bool StageScaleEditorOnly { get; set; }
 
-        float AtmosphereDepth { get; set; }
-        
-        float MaxDepth { get; }
+		bool CurrentStageOnly { get; set; }
+
+		bool ShowCurrentStageBar { get; }
+
+		float AtmosphereDepth { get; set; }
+
+		float MaxDepth { get; }
 
 		float Mach { get; set; }
 
-        float Alpha { get; set; }
+		float Alpha { get; set; }
 
 		float StageScale { get; set; }
 
-        float ToolbarScale { get; set; }
+		float ToolbarScale { get; set; }
 
 		float Height { get; set; }
 
-        Dictionary<string, int> CelestialBodies { get; }
-        
-        void ClampToScreen(RectTransform rect);
-    }
+		float FlightHeight { get; set; }
+
+		Dictionary<string, int> CelestialBodies { get; }
+
+		void ClampToScreen(RectTransform rect);
+	}
 }
