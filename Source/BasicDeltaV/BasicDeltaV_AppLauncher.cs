@@ -88,13 +88,16 @@ namespace BasicDeltaV
             while (ApplicationLauncher.Instance == null)
                 yield return null;
 
-            button = ApplicationLauncher.Instance.AddModApplication(OnTrue, OnFalse, OnHover, OnHoverOut, null, null, ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH, icon);
+            button = ApplicationLauncher.Instance.AddModApplication(OnTrue, OnFalse, OnHover, OnHoverOut, null, null, ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH | ApplicationLauncher.AppScenes.FLIGHT, icon);
 
             ApplicationLauncher.Instance.EnableMutuallyExclusive(button);
 
             GameEvents.onGUIApplicationLauncherUnreadifying.Add(RemoveButton);
 
 			button.onRightClick = (Callback)Delegate.Combine(button.onRightClick, new Callback(OnRightClick));
+
+			if (!BasicDeltaV.ReadoutsAvailable)
+				button.Disable();
 
             buttonAdder = null;
         }
@@ -107,6 +110,14 @@ namespace BasicDeltaV
             ApplicationLauncher.Instance.RemoveModApplication(button);
             button = null;
         }
+
+		public void ToggleButtonState(bool isOn)
+		{
+			if (isOn)
+				button.Enable();
+			else
+				button.Disable();
+		}
 
         private void Reposition()
         {
