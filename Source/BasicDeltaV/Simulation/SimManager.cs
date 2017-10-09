@@ -1,5 +1,5 @@
 ﻿// 
-//     Kerbal Engineer Redux
+//     Code From Kerbal Engineer Redux
 // 
 //     Copyright (C) 2014 CYBUTEK
 // 
@@ -271,7 +271,7 @@ namespace BasicDeltaV.Simulation
 		{
 			lock (locker)
 			{
-				if (!bRequested || bRunning || (timer.Elapsed < delayBetweenSims && timer.Elapsed >= TimeSpan.Zero))
+				if (!bRequested || bRunning || (timer.Elapsed < delayBetweenSims && timer.Elapsed >= TimeSpan.Zero) || (!HighLogic.LoadedSceneIsEditor && FlightGlobals.ActiveVessel == null))
 				{
 					return;
 				}
@@ -360,8 +360,16 @@ namespace BasicDeltaV.Simulation
 					timer.Start();
 				}
 
-				parts = EditorLogic.fetch.ship.parts;
-				
+				if (HighLogic.LoadedSceneIsEditor)
+				{
+					parts = EditorLogic.fetch.ship.parts;
+				}
+				else
+				{
+					parts = FlightGlobals.ActiveVessel.Parts;
+					Atmosphere = FlightGlobals.ActiveVessel.staticPressurekPa * PhysicsGlobals.KpaToAtmospheres;
+				}
+
 				// This call doesn't ever fail at the moment but we'll check and return a sensible error for display
 				if (simulation.PrepareSimulation(logOutput ? log : null, parts, Gravity, Atmosphere, Mach, dumpTree, vectoredThrust))
 				{

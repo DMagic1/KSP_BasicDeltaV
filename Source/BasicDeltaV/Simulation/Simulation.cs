@@ -1,5 +1,5 @@
 ﻿// 
-//     Kerbal Engineer Redux
+//     Code From Kerbal Engineer Redux
 // 
 //     Copyright (C) 2014 CYBUTEK
 // 
@@ -292,27 +292,27 @@ namespace BasicDeltaV.Simulation
 				bool bActive = engine.isActive;
 				bool bStage = (engine.partSim.inverseStage >= currentStage);
 				if (log != null) log.AppendLine("bActive = ", bActive, "   bStage = ", bStage);
-				//if (HighLogic.LoadedSceneIsFlight)
-				//{
-				//	if (bActive)
-				//	{
-				//		anyActive = true;
-				//	}
-				//	if (bActive != bStage)
-				//	{
-				//		// If the active state is different to the state due to staging
-				//		if (log != null) log.AppendLine("Need to do current active engines first");
-				//		doingCurrent = true;
-				//	}
-				//}
-				//else
-				//{
+				if (HighLogic.LoadedSceneIsFlight)
+				{
+					if (bActive)
+					{
+						anyActive = true;
+					}
+					if (bActive != bStage)
+					{
+						// If the active state is different to the state due to staging
+						if (log != null) log.AppendLine("Need to do current active engines first");
+						doingCurrent = true;
+					}
+				}
+				else
+				{
 					if (bStage)
 					{
 						if (log != null) log.AppendLine("Marking as active");
 						engine.isActive = true;
 					}
-				//}
+				}
 			}
 
 			// If we need to do current because of difference in engine activation and there actually are active engines
