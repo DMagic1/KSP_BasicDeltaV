@@ -108,6 +108,12 @@ namespace BasicDeltaV
 			set { index = value; }
 		}
 
+		public void ToggleNoDVModules(bool isOn)
+		{
+			if (panel != null)
+				panel.ToggleNoDVModules(isOn);
+		}
+
         private void StartModules()
 		{
 			modules.Clear();
@@ -115,19 +121,19 @@ namespace BasicDeltaV
 			if (BasicDeltaV_Settings.Instance.ShowDeltaV && !BasicDeltaV.Instance.ComplexRestrictions)
 				modules.Add(new BasicDeltaV_DeltaV("ΔV", this));
 
-			if (BasicDeltaV_Settings.Instance.ShowTWR && stage != null && stage.deltaV > 0 && !BasicDeltaV.Instance.SimpleRestrictions)
+			if (BasicDeltaV_Settings.Instance.ShowTWR && !BasicDeltaV.Instance.SimpleRestrictions)
 				modules.Add(new BasicDeltaV_TWR("TWR", this));
 
 			if (BasicDeltaV_Settings.Instance.ShowMass && !BasicDeltaV.Instance.SimpleRestrictions)
 				modules.Add(new BasicDeltaV_Mass("Mass", this));
 
-			if (BasicDeltaV_Settings.Instance.ShowBurnTime && stage != null && stage.deltaV > 0 && !BasicDeltaV.Instance.ComplexRestrictions)
+			if (BasicDeltaV_Settings.Instance.ShowBurnTime && !BasicDeltaV.Instance.ComplexRestrictions)
 				modules.Add(new BasicDeltaV_BurnTime("Burn Time", this));
 
-			if (BasicDeltaV_Settings.Instance.ShowISP && stage != null && stage.deltaV > 0 && !BasicDeltaV.Instance.ComplexRestrictions)
+			if (BasicDeltaV_Settings.Instance.ShowISP  && !BasicDeltaV.Instance.ComplexRestrictions)
 				modules.Add(new BasicDeltaV_ISP("ISP", this));
 
-			if (BasicDeltaV_Settings.Instance.ShowThrust && stage != null && stage.deltaV > 0 && !BasicDeltaV.Instance.SimpleRestrictions)
+			if (BasicDeltaV_Settings.Instance.ShowThrust && !BasicDeltaV.Instance.SimpleRestrictions)
 				modules.Add(new BasicDeltaV_Thrust("Thrust", this));
         }
 
