@@ -102,14 +102,6 @@ namespace BasicDeltaV
 
 			if (HighLogic.LoadedSceneIsEditor)
 			{
-				//_simpleRestrictions = _settings.CareerRestrictions && ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.ResearchAndDevelopment) < 0.5f;
-				//_complexRestrictions = _settings.CareerRestrictions && ScenarioUpgradeableFacilities.GetFacilityLevel(SpaceCenterFacility.ResearchAndDevelopment) < 0.75f;
-
-				//if (_simpleRestrictions && _complexRestrictions)
-				//	_readoutsAvailable = false;
-				//else
-				//	_readoutsAvailable = true;
-
 				_simpleRestrictions = false;
 				_complexRestrictions = false;
 				_readoutsAvailable = true;
@@ -211,6 +203,9 @@ namespace BasicDeltaV
 				return;
 
 			if (!_readoutsAvailable)
+				return;
+
+			if (HighLogic.LoadedSceneIsFlight && MapView.MapIsEnabled)
 				return;
 
 			if (stages != null)
@@ -408,23 +403,7 @@ namespace BasicDeltaV
 
 		private void OnStage(int stage)
 		{
-			StartCoroutine(WaitForStage());
-		}
-
-		private IEnumerator WaitForStage()
-		{
-			int timer = 0;
-
-			while (timer < 30)
-			{
-				timer++;
-				yield return null;
-			}
-			//BasicLogging("Checking Vessel After Stage...");
-
 			CheckVesselCrew(FlightGlobals.ActiveVessel);
-
-			//BasicLogging("Crew Valid: {0}", _readoutsAvailable);
 
 			appLauncher.ToggleButtonState(_readoutsAvailable);
 
