@@ -33,6 +33,8 @@ namespace BasicDeltaV.Unity.Interface
 
         bool SmallSize { get; }
 
+		bool DVModule { get; }
+
         int Order { get; set; }
 
 		int FixedOrder { get; }

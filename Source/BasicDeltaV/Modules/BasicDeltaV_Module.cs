@@ -33,6 +33,7 @@ namespace BasicDeltaV.Modules
         private string _title;
         private string _moduleValue;
         protected bool _smallSize;
+		protected bool _dvModule;
         protected int _order;
 		protected int _fixedOrder;
 		protected bool _simple;
@@ -58,6 +59,11 @@ namespace BasicDeltaV.Modules
         {
             get { return _smallSize; }
         }
+
+		public bool DVModule
+		{
+			get { return _dvModule; }
+		}
 
         public int Order
         {
