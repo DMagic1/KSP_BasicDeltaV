@@ -37,6 +37,23 @@ namespace BasicDeltaV.Unity.Unity
 
         private IBasicModule moduleInterface;
 
+		public void ToggleModule(bool isOn)
+		{
+			if (moduleInterface == null || !moduleInterface.DVModule)
+				return;
+
+			if (isOn)
+			{
+				if (!gameObject.activeSelf)
+					gameObject.SetActive(true);
+			}
+			else
+			{
+				if (gameObject.activeSelf)
+					gameObject.SetActive(false);
+			}
+		}
+
         public void setModule(IBasicModule module)
         {
             if (module == null || m_TextModule == null)

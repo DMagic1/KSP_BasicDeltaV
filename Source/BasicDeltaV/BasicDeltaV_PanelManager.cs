@@ -244,6 +244,14 @@ namespace BasicDeltaV
 						panel.SetVisible(false);
 						continue;
 					}
+					else if (panel.Stage.deltaV <= 0)
+					{
+						panel.ToggleNoDVModules(false);
+					}
+					else
+					{
+						panel.ToggleNoDVModules(true);
+					}
 				}
 				else if (panel.Stage.deltaV <= 0)
 				{

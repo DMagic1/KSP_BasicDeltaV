@@ -147,6 +147,19 @@ namespace BasicDeltaV.Unity.Unity
 				m_Header.color = c;
 			}
         }
+
+		public void ToggleNoDVModules(bool isOn)
+		{
+			for (int i = Modules.Count - 1; i >= 0; i--)
+			{
+				BasicDeltaV_Module mod = Modules[i];
+
+				if (mod == null)
+					continue;
+
+				mod.ToggleModule(isOn);
+			}
+		}
         
         private void CreateModules(List<IBasicModule> modules)
         {
@@ -241,18 +254,6 @@ namespace BasicDeltaV.Unity.Unity
                 for (int i = 0; i < smallMods.Count; i++)
                     smallMods[i].Order = (i * 2) + 1;
             }
-			//else if (largeMods.Count == 4)
-			//{
-			//	for (int i = 0; i < largeMods.Count - 1; i++)
-			//		largeMods[i].Order = (i + 1) * 2;
-
-			//	largeMods[3].Order = 7;
-
-			//	for (int i = 0; i < smallMods.Count; i++)
-			//		smallMods[i].Order = (i * 2) + 1;
-
-			//	shiftUp = true;
-			//}
 
             List<IBasicModule> orderedMods = new List<IBasicModule>();
 
