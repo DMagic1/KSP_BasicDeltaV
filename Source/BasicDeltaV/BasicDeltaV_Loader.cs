@@ -322,7 +322,14 @@ namespace BasicDeltaV
 			BasicDeltaV_TextMeshPro tmp = obj.AddComponent<BasicDeltaV_TextMeshPro>();
 
 			tmp.text = t;
-			tmp.color = c;
+
+            if (handler.ReadoutField && BasicDeltaV_Settings.Instance != null)
+                tmp.color = BasicDeltaV_Settings.Instance.ReadoutColor;
+            else if (handler.ReadoutLabel && BasicDeltaV_Settings.Instance != null)
+                tmp.color = BasicDeltaV_Settings.Instance.LabelColor;
+            else
+                tmp.color = c;
+            
 			tmp.fontSize = i;
 			tmp.raycastTarget = r;
 			tmp.alignment = align;

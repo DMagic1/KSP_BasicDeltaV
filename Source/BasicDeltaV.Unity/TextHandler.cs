@@ -36,6 +36,10 @@ namespace BasicDeltaV.Unity
         private bool m_Outline = false;
         [SerializeField]
         private float m_OutlineWidth = 0;
+        [SerializeField]
+        private bool m_ReadoutLabel = false;
+        [SerializeField]
+        private bool m_ReadoutField = false;
 
         public class OnTextEvent : UnityEvent<string> { }
         
@@ -49,6 +53,16 @@ namespace BasicDeltaV.Unity
         public float OutlineWidth
         {
             get { return m_OutlineWidth; }
+        }
+
+        public bool ReadoutLabel
+        {
+            get { return m_ReadoutLabel; }
+        }
+
+        public bool ReadoutField
+        {
+            get { return m_ReadoutField; }
         }
 
         public UnityEvent<string> OnTextUpdate

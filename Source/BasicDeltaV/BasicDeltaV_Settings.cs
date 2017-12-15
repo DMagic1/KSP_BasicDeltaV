@@ -69,7 +69,11 @@ namespace BasicDeltaV
 		[Persistent]
 		public float FlightWindowHeight = 280;
 		[Persistent]
-		public string CrewRestrictionType = "RepairSkill";
+		public string CrewRestrictionType = "AutopilotSkill";
+        [Persistent]
+        public Color LabelColor = Color.white;
+        [Persistent]
+        public Color ReadoutColor = new Color(0.72157f, 0.79216f, 0.44706f);
 
 		public List<string> SkillTypes = new List<string>();
 
