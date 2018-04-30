@@ -709,7 +709,7 @@ namespace BasicDeltaV.Simulation
 			{
 				PartSim partSim = allParts[i];
 
-				if (partSim.isEngine || !partSim.Resources.Empty)
+				if (partSim.isEngine || !partSim.resources.Empty)
 				{
 					if (log != null) log.AppendLine(partSim.name, ":", partSim.partId, " is engine or tank, decoupled = ", partSim.decoupledInStage);
 
@@ -805,7 +805,7 @@ namespace BasicDeltaV.Simulation
 			// Reset the resource drains of all draining parts
 			foreach (PartSim partSim in drainingParts)
 			{
-				partSim.ResourceDrains.Reset();
+				partSim.resourceDrains.Reset();
 			}
 
 			// Empty the draining parts set

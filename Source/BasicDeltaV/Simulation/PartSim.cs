@@ -68,11 +68,13 @@ namespace BasicDeltaV.Simulation
 		public ResourceContainer resourceFlowStates = new ResourceContainer();
 		public ResourceContainer resources = new ResourceContainer();
 		public double startMass = 0d;
-		public String vesselName;
+        public double crewMassOffset = 0d;
+        public String vesselName;
 		public VesselType vesselType;
+        public bool isEnginePlate;
 
 
-		private static PartSim Create()
+        private static PartSim Create()
 		{
 			return new PartSim();
 		}
@@ -94,7 +96,8 @@ namespace BasicDeltaV.Simulation
 			partSim.baseMass = 0d;
 			partSim.baseMassForCoM = 0d;
 			partSim.startMass = 0d;
-		}
+            partSim.crewMassOffset = 0d;
+        }
 
 		public void Release()
 		{
@@ -116,7 +119,10 @@ namespace BasicDeltaV.Simulation
 			partSim.parentAttach = p.attachMode;
 			partSim.fuelCrossFeed = p.fuelCrossFeed;
 			partSim.noCrossFeedNodeKey = p.NoCrossFeedNodeKey;
-			partSim.decoupledInStage = partSim.DecoupledInStage(p);
+            partSim.isEnginePlate = IsEnginePlate(p);
+            if (partSim.isEnginePlate)
+                partSim.noCrossFeedNodeKey = "bottom";
+            partSim.decoupledInStage = partSim.DecoupledInStage(p);
 			partSim.isFuelLine = p.HasModule<CModuleFuelLine>();
 			partSim.isSepratron = partSim.IsSepratron();
 			partSim.inverseStage = p.inverseStage;
@@ -142,9 +148,10 @@ namespace BasicDeltaV.Simulation
 				if (log != null) log.AppendLine("Ignoring mass of launch clamp");
 			}
 			else
-			{
-				partSim.realMass = p.mass;
-				if (log != null) log.AppendLine("Using part.mass of ", p.mass);
+            {
+                partSim.crewMassOffset = p.getCrewAdjustment();
+                partSim.realMass = p.mass + partSim.crewMassOffset;
+                if (log != null) log.AppendLine("Using part.mass of ", partSim.realMass);
 			}
 
 			partSim.postStageMassAdjust = 0f;
@@ -167,8 +174,9 @@ namespace BasicDeltaV.Simulation
 				}
 			}
 			if (log != null) log.AppendLine("postStageMassAdjust = ", partSim.postStageMassAdjust);
+            if (log != null) log.AppendLine("crewMassOffset = ", partSim.crewMassOffset);
 
-			for (int i = 0; i < p.Resources.Count; i++)
+            for (int i = 0; i < p.Resources.Count; i++)
 			{
 				PartResource resource = p.Resources[i];
 
@@ -205,77 +213,39 @@ namespace BasicDeltaV.Simulation
 
 			return partSim;
 		}
-
-		public ResourceContainer ResourceDrains
-		{
-			get
-			{
-				return resourceDrains;
-			}
-		}
-
-		public ResourceContainer Resources
-		{
-			get
-			{
-				return resources;
-			}
-		}
-
+        
 		public void CreateEngineSims(List<EngineSim> allEngines, double atmosphere, double mach, bool vectoredThrust, bool fullThrust, LogMsg log)
 		{
 			if (log != null) log.AppendLine("CreateEngineSims for ", this.name);
-			var partMods = this.part.Modules;
-			var numMods = partMods.Count;
+            List<ModuleEngines> cacheModuleEngines = part.FindModulesImplementing<ModuleEngines>();
 
-			if (hasMultiModeEngine)
-			{
-				// A multi-mode engine has multiple ModuleEngines but only one is active at any point
-				// The mode of the engine is the engineID of the ModuleEngines that is (are?) active
-				string mode = part.GetModule<MultiModeEngine>().mode;
-
-				for (int i = 0; i < numMods; i++)
-				{
-					//log.AppendLine("Module: ", partMods[i].moduleName);
-					var engine = partMods[i] as ModuleEngines;
-					if (engine != null && engine.engineID == mode)
-					{
-						if (log != null) log.AppendLine("Module: ", engine.moduleName);
-
-						EngineSim engineSim = EngineSim.New(
-							this,
-							engine,
-							atmosphere,
-							(float)mach,
-							vectoredThrust,
-							fullThrust,
-							log);
-						allEngines.Add(engineSim);
-					}
-				}
-			}
-			else if (hasModuleEngines)
-			{
-				for (int i = 0; i < numMods; i++)
-				{
-					//log.AppendLine("Module: ", partMods[i].moduleName);
-					var engine = partMods[i] as ModuleEngines;
-					if (engine != null)
-					{
-						if (log != null) log.AppendLine("Module: ", engine.moduleName);
-
-						EngineSim engineSim = EngineSim.New(
-							this,
-							engine,
-							atmosphere,
-							(float)mach,
-							vectoredThrust,
-							fullThrust,
-							log);
-						allEngines.Add(engineSim);
-					}
-				}
-			}
+            try
+            {
+                if (cacheModuleEngines.Count > 0)
+                {
+                    //find first active engine, assuming that two are never active at the same time
+                    foreach (ModuleEngines engine in cacheModuleEngines)
+                    {
+                        if (engine.isEnabled)
+                        {
+                            if (log != null) log.AppendLine("Module: ", engine.moduleName);
+                            EngineSim engineSim = EngineSim.New(
+                                this,
+                                engine,
+                                atmosphere,
+                                (float)mach,
+                                vectoredThrust,
+                                fullThrust,
+                                log);
+                            allEngines.Add(engineSim);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                Debug.Log("[KER] Error Catch in CreateEngineSims");
+            }            
 		}
 
 		public void DrainResources(double time, LogMsg log)
@@ -328,35 +298,57 @@ namespace BasicDeltaV.Simulation
 
 			log.Append(", isSep = {0}", isSepratron);
 
-			for (int i = 0; i < resources.Types.Count; i++)
-			{
-				int type = resources.Types[i];
-				log.buf.AppendFormat(", {0} = {1:g6}", ResourceContainer.GetResourceName(type), resources[type]);
-			}
+            try
+            {
+                for (int i = 0; i < resources.Types.Count; i++)
+                {
+                    int type = resources.Types[i];
+                    log.buf.AppendFormat(", {0} = {1:g6}", ResourceContainer.GetResourceName(type), resources[type]);
+                }
+            }
+            catch (Exception e)
+            {
+                log.Append("error dumping part resources " + e.ToString());
+            }
 
-			if (attachNodes.Count > 0)
-			{
-				log.Append(", attached = <");
-				attachNodes[0].DumpToLog(log);
-				for (int i = 1; i < attachNodes.Count; i++)
-				{
-					log.Append(", ");
-					attachNodes[i].DumpToLog(log);
-				}
-				log.Append(">");
-			}
+            try
+            {
+                if (attachNodes.Count > 0)
+                {
+                    log.Append(", attached = <");
+                    attachNodes[0].DumpToLog(log);
+                    for (int i = 1; i < attachNodes.Count; i++)
+                    {
+                        log.Append(", ");
+                        if (attachNodes[i] != null) attachNodes[i].DumpToLog(log); //its u, isn't it?
+                    }
+                    log.Append(">");
+                }
+            }
+            catch (Exception e)
+            {
+                log.Append("error dumping part nodes" + e.ToString());
 
-			if (surfaceMountFuelTargets.Count > 0)
-			{
-				log.Append(", surface = <");
-				log.Append(surfaceMountFuelTargets[0].name, ":", surfaceMountFuelTargets[0].partId);
-				for (int i = 1; i < surfaceMountFuelTargets.Count; i++)
-				{
-					log.Append(", ", surfaceMountFuelTargets[i].name, ":", surfaceMountFuelTargets[i].partId);
-				}
-				log.Append(">");
-			}
+            }
 
+            try
+            {
+                if (surfaceMountFuelTargets.Count > 0)
+                {
+                    log.Append(", surface = <");
+                    if (surfaceMountFuelTargets[0] != null) log.Append(surfaceMountFuelTargets[0].name, ":", surfaceMountFuelTargets[0].partId);
+                    for (int i = 1; i < surfaceMountFuelTargets.Count; i++)
+                    {
+                        if (surfaceMountFuelTargets[i] != null) log.Append(", ", surfaceMountFuelTargets[i].name, ":", surfaceMountFuelTargets[i].partId); //no it was u.
+                    }
+                    log.Append(">");
+                }
+            }
+            catch (Exception e)
+            {
+                log.Append("error dumping part surface fuels " + e.ToString());
+            }
+            
 			// Add more info here
 
 			log.AppendLine("]");
@@ -535,10 +527,24 @@ namespace BasicDeltaV.Simulation
 								}
 								else
 								{
-									if (log != null) log.Append(indent, "Adding attached part as source  (", attachSim.attachedPartSim.name, ":")
-														.AppendLine(attachSim.attachedPartSim.partId, ")");
+                                    bool flg = true;
 
-									attachSim.attachedPartSim.GetSourceSet_Internal(type, includeSurfaceMountedParts, allParts, visited, allSources, ref priMax, log, indent);
+                                    if (attachSim.attachedPartSim.isEnginePlate) //y u make me do dis.
+                                    {
+                                        foreach (AttachNodeSim att in attachSim.attachedPartSim.attachNodes)
+                                        {
+                                            if (att.attachedPartSim == this && att.id == "bottom")
+                                                flg = false;
+                                        }
+                                    }
+
+                                    if (flg)
+                                    {
+                                        if (log != null) log.Append(indent, "Adding attached part as source  (", attachSim.attachedPartSim.name, ":")
+                                                            .AppendLine(attachSim.attachedPartSim.partId, ")");
+
+                                        attachSim.attachedPartSim.GetSourceSet_Internal(type, includeSurfaceMountedParts, allParts, visited, allSources, ref priMax, log, indent);
+                                    }
 								}
 							}
 						}
@@ -577,186 +583,7 @@ namespace BasicDeltaV.Simulation
 									.AppendLine("  FlowState = " + resourceFlowStates[type]);
 			}
 		}
-
-		// This is the old recursive function for STACK_PRIORITY_SEARCH
-		public void GetSourceSet_Old(int type, bool includeSurfaceMountedParts, List<PartSim> allParts, HashSet<PartSim> visited, HashSet<PartSim> allSources, LogMsg log, String indent)
-		{
-			if (log != null)
-			{
-				log.Append(indent, "GetSourceSet_Old(", ResourceContainer.GetResourceName(type), ") for ")
-					.AppendLine(name, ":", partId);
-				indent += "  ";
-			}
-
-			// Rule 1: Each part can be only visited once, If it is visited for second time in particular search it returns as is.
-			if (visited.Contains(this))
-			{
-				if (log != null) log.Append(indent, "Returning empty set, already visited (", name, ":")
-									.AppendLine(partId + ")");
-				return;
-			}
-
-			if (log != null) log.AppendLine(indent, "Adding this to visited");
-
-			visited.Add(this);
-
-			// Rule 2: Part performs scan on start of every fuel pipe ending in it. This scan is done in order in which pipes were installed.
-			// Then it makes an union of fuel tank sets each pipe scan returned. If the resulting list is not empty, it is returned as result.
-			//MonoBehaviour.print("for each fuel line");
-
-			int lastCount = allSources.Count;
-
-			for (int i = 0; i < this.fuelTargets.Count; i++)
-			{
-				PartSim partSim = this.fuelTargets[i];
-				if (partSim != null)
-				{
-					if (visited.Contains(partSim))
-					{
-						if (log != null) log.Append(indent, "Fuel target already visited, skipping (", partSim.name, ":")
-											.AppendLine(partSim.partId, ")");
-					}
-					else
-					{
-						if (log != null) log.Append(indent, "Adding fuel target as source (", partSim.name, ":")
-											.AppendLine(partSim.partId, ")");
-
-						partSim.GetSourceSet_Old(type, includeSurfaceMountedParts, allParts, visited, allSources, log, indent);
-					}
-				}
-			}
-
-			// check surface mounted fuel targets
-			if (includeSurfaceMountedParts)
-			{
-				for (int i = 0; i < surfaceMountFuelTargets.Count; i++)
-				{
-					PartSim partSim = this.surfaceMountFuelTargets[i];
-					if (partSim != null)
-					{
-						if (visited.Contains(partSim))
-						{
-							if (log != null) log.Append(indent, "Fuel target already visited, skipping (", partSim.name, ":")
-												.AppendLine(partSim.partId, ")");
-						}
-						else
-						{
-							if (log != null) log.Append(indent, "Adding fuel target as source (", partSim.name, ":")
-												.AppendLine(partSim.partId, ")");
-
-							partSim.GetSourceSet_Old(type, true, allParts, visited, allSources, log, indent);
-						}
-					}
-				}
-			}
-
-			if (allSources.Count > lastCount)
-			{
-				if (log != null) log.Append(indent, "Returning ", (allSources.Count - lastCount), " fuel target sources (")
-									.AppendLine(this.name, ":", this.partId, ")");
-				return;
-			}
-
-
-			// Rule 3: This rule has been removed and merged with rules 4 and 7 to fix issue with fuel tanks with disabled crossfeed
-
-			// Rule 4: Part performs scan on each of its axially mounted neighbors. 
-			//  Couplers (bicoupler, tricoupler, ...) are an exception, they only scan one attach point on the single attachment side,
-			//  skip the points on the side where multiple points are. [Experiment]
-			//  Again, the part creates union of scan lists from each of its neighbor and if it is not empty, returns this list. 
-			//  The order in which mount points of a part are scanned appears to be fixed and defined by the part specification file. [Experiment]
-			if (fuelCrossFeed)
-			{
-				lastCount = allSources.Count;
-				//MonoBehaviour.print("for each attach node");
-				for (int i = 0; i < this.attachNodes.Count; i++)
-				{
-					AttachNodeSim attachSim = this.attachNodes[i];
-					if (attachSim.attachedPartSim != null)
-					{
-						if (attachSim.nodeType == AttachNode.NodeType.Stack)
-						{
-							if ((string.IsNullOrEmpty(noCrossFeedNodeKey) == false && attachSim.id.Contains(noCrossFeedNodeKey)) == false)
-							{
-								if (visited.Contains(attachSim.attachedPartSim))
-								{
-									if (log != null) log.Append(indent, "Attached part already visited, skipping (", attachSim.attachedPartSim.name, ":")
-														.AppendLine(attachSim.attachedPartSim.partId, ")");
-								}
-								else
-								{
-									if (log != null) log.Append(indent, "Adding attached part as source  (", attachSim.attachedPartSim.name, ":")
-														.AppendLine(attachSim.attachedPartSim.partId, ")");
-
-									attachSim.attachedPartSim.GetSourceSet_Old(type, includeSurfaceMountedParts, allParts, visited, allSources, log, indent);
-								}
-							}
-						}
-					}
-				}
-
-				if (allSources.Count > lastCount)
-				{
-					if (log != null) log.Append(indent, "Returning " + (allSources.Count - lastCount) + " attached sources (")
-										.AppendLine(this.name, ":", this.partId, ")");
-					return;
-				}
-			}
-
-			// Rule 5: If the part is fuel container for searched type of fuel (i.e. it has capability to contain that type of fuel and the fuel 
-			// type was not disabled [Experiment]) and it contains fuel, it returns itself.
-			// Rule 6: If the part is fuel container for searched type of fuel (i.e. it has capability to contain that type of fuel and the fuel 
-			// type was not disabled) but it does not contain the requested fuel, it returns empty list. [Experiment]
-			if (resources.HasType(type) && resourceFlowStates[type] > 0.0)
-			{
-				if (resources[type] > SimManager.RESOURCE_MIN)
-				{
-					allSources.Add(this);
-
-					if (log != null) log.Append(indent, "Returning enabled tank as only source (", name, ":")
-										.AppendLine(partId, ")");
-
-					return;
-				}
-			}
-			else
-			{
-				if (log != null) log.Append(indent, "Not fuel tank or disabled. HasType = ", resources.HasType(type))
-									.AppendLine("  FlowState = " + resourceFlowStates[type]);
-			}
-
-			// Rule 7: If the part is radially attached to another part and it is child of that part in the ship's tree structure, it scans its 
-			// parent and returns whatever the parent scan returned. [Experiment] [Experiment]
-			if (parent != null && parentAttach == AttachModes.SRF_ATTACH)
-			{
-				if (fuelCrossFeed)
-				{
-					if (visited.Contains(parent))
-					{
-						if (log != null) log.Append(indent, "Parent part already visited, skipping (", parent.name, ":")
-											.AppendLine(parent.partId, ")");
-					}
-					else
-					{
-						lastCount = allSources.Count;
-						this.parent.GetSourceSet_Old(type, includeSurfaceMountedParts, allParts, visited, allSources, log, indent);
-						if (allSources.Count > lastCount)
-						{
-							if (log != null) log.Append(indent, "Returning ", (allSources.Count - lastCount), " parent sources (")
-												.AppendLine(this.name, ":", this.partId, ")");
-							return;
-						}
-					}
-				}
-			}
-
-			// Rule 8: If all preceding rules failed, part returns empty list.
-			if (log != null) log.Append(indent, "Returning empty set, no sources found (", name, ":")
-								.AppendLine(partId, ")");
-
-			return;
-		}
-
+        
 		public double GetStartMass()
 		{
 			return startMass;
@@ -917,38 +744,85 @@ namespace BasicDeltaV.Simulation
 
 			return thrustvec;
 		}
+        
+        private int DecoupledInStage(Part thePart)
+        {
+            int stage = -1;
+            Part original = thePart;
 
-		private int DecoupledInStage(Part thePart, int stage = -1)
-		{
-			if (IsDecoupler(thePart) && thePart.inverseStage > stage)
-				stage = thePart.inverseStage;
+            if (original.parent == null)
+                return stage; //root part is always present. Fixes phantom stage if root is stageable.
 
-			if (thePart.parent != null)
-				stage = DecoupledInStage(thePart.parent, stage);
+            List<Part> chain = new List<Part>(); //prolly dont need a list, just the previous part but whatever.
 
-			return stage;
-		}
+            while (thePart != null)
+            {
+                chain.Add(thePart);
 
-		private bool IsActiveDecoupler(Part thePart)
-		{
-			return thePart.FindModulesImplementing<ModuleDecouple>().Any(mod => !mod.isDecoupled) ||
-				   thePart.FindModulesImplementing<ModuleAnchoredDecoupler>().Any(mod => !mod.isDecoupled);
-		}
+                if (thePart.inverseStage > stage)
+                {
+                    ModuleDecouple mdec = thePart.GetModule<ModuleDecouple>();
+                    ModuleDockingNode mdock = thePart.GetModule<ModuleDockingNode>();
+                    ModuleAnchoredDecoupler manch = thePart.GetModule<ModuleAnchoredDecoupler>();
 
-		private bool IsDecoupler(Part thePart)
-		{
-			PartExtensions.ProtoModuleDecoupler protoDecoupler = thePart.GetProtoModuleDecoupler();
-			if (protoDecoupler != null && protoDecoupler.IsStageEnabled)
-				return true;
+                    if (mdec != null)
+                    {
+                        AttachNode att = thePart.FindAttachNode(mdec.explosiveNodeID);
+                        if (mdec.isOmniDecoupler)
+                            stage = thePart.inverseStage;
+                        else
+                        {
+                            if (att != null)
+                            {
+                                if ((thePart.parent != null && att.attachedPart == thePart.parent) || chain.Contains(att.attachedPart))
+                                    stage = thePart.inverseStage;
+                            }
+                            else stage = thePart.inverseStage;
+                        }
+                    }
 
-			ModuleDockingNode modDock = thePart.GetModule<ModuleDockingNode>();
-			if (modDock != null && modDock.IsStageable())
-				return true;
+                    if (manch != null) //radial decouplers (ALSO REENTRY PODS BECAUSE REASONS!)
+                    {
+                        AttachNode att = thePart.FindAttachNode(manch.explosiveNodeID); // these stupid fuckers don't initialize in the Editor scene.
+                        if (att != null)
+                        {
+                            if ((thePart.parent != null && att.attachedPart == thePart.parent) || chain.Contains(att.attachedPart))
+                                stage = thePart.inverseStage;
+                        }
+                        else stage = thePart.inverseStage; //radial decouplers it seems the attach node ('surface') comes back null.
+                    }
 
-			return false;
-		}
+                    if (mdock != null) //docking port
+                    {
+                        if (original == thePart)
+                        {    //checking self, never leaves.
 
-		private bool IsSepratron()
+                        }
+                        else stage = thePart.inverseStage;
+                    }
+
+                }
+
+                thePart = thePart.parent;
+            }
+
+            return stage;
+        }
+        
+        private static bool IsEnginePlate(Part thePart)
+        {
+            ModuleDecouple mdec = thePart.GetModule<ModuleDecouple>();
+            if (mdec != null && mdec.IsStageable())
+            {
+                ModuleDynamicNodes mdyn = thePart.GetModule<ModuleDynamicNodes>();
+                if (mdyn != null)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private bool IsSepratron()
 		{
 			if (!part.ActivatesEvenIfDisconnected)
 			{
