@@ -42,6 +42,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BasicDVPanelManager.cs" />
     <Compile Include="BasicStyle.cs" />
     <Compile Include="CanvasFader.cs" />
     <Compile Include="Interface\IBasicModule.cs" />

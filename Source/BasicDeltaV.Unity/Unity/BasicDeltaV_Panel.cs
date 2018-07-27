@@ -79,29 +79,33 @@ namespace BasicDeltaV.Unity.Unity
         
         public void Close()
         {
+            BasicDVPanelManager.Instance.UnregisterPanel(this);
+
             gameObject.SetActive(false);
 
             Destroy(gameObject);
         }
-        
+
         public void setPanel(List<IBasicModule> modules, float alpha, bool right)
         {
             CreateModules(modules);
-            
+
             SetAlpha(alpha);
 
-			if (right)
-			{
-				if (m_ContentLayout != null)
-					m_ContentLayout.childAlignment = TextAnchor.UpperLeft;
+            if (right)
+            {
+                if (m_ContentLayout != null)
+                    m_ContentLayout.childAlignment = TextAnchor.UpperLeft;
 
-				if (rect != null)
-				{
-					rect.pivot = new Vector2(0, 0);
+                if (rect != null)
+                {
+                    rect.pivot = new Vector2(0, 0);
 
-					rect.anchoredPosition = new Vector2(24, rect.anchoredPosition.y);
-				}
-			}	
+                    rect.anchoredPosition = new Vector2(24, rect.anchoredPosition.y);
+                }
+            }
+
+            BasicDVPanelManager.Instance.RegisterPanel(this);
         }
 
 		public void MovePanel(bool right)
@@ -279,7 +283,7 @@ namespace BasicDeltaV.Unity.Unity
             Modules.Add(mod);
         }
         
-        private void Update()
+        public void OnUpdate()
         {
             for (int i = Modules.Count - 1; i >= 0; i--)
             {
