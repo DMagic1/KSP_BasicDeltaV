@@ -223,7 +223,7 @@ namespace BasicDeltaV
 					continue;
 				}
 
-				if (!BasicDeltaV_Settings.Instance.DisplayActive)
+				if (!BasicDeltaV.Instance.DisplayActive)
 				{
 					panel.SetVisible(false);
 					continue;

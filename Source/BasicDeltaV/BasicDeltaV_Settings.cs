@@ -37,6 +37,8 @@ namespace BasicDeltaV
 		[Persistent]
 		public bool DisplayActive = true;
         [Persistent]
+        public bool DisplayActiveFlight = true;
+        [Persistent]
         public bool ShowDeltaV = true;
         [Persistent]
         public bool ShowTWR = true;
