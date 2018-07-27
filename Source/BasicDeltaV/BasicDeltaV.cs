@@ -31,7 +31,7 @@ using System.Reflection;
 using BasicDeltaV.Simulation;
 using BasicDeltaV.Unity.Interface;
 using UnityEngine;
-using UnityEngine.UI;
+using BasicDeltaV.Unity;
 using KSP.UI;
 using KSP.UI.Screens;
 
@@ -46,6 +46,9 @@ namespace BasicDeltaV
         
         private BasicDeltaV_AppLauncher appLauncher;
 		private BasicDeltaV_PanelManager panelHandler;
+
+        private BasicDVPanelManager panelManager;
+
         private string _version;
         private float _atmosphereDepth;
 		private float _mach;
@@ -98,7 +101,9 @@ namespace BasicDeltaV
         {
 			_settings = HighLogic.CurrentGame.Parameters.CustomParams<BasicDeltaV_GameParameters>();
 
-			_inFlight = _settings.AllowFlight;
+            panelManager = gameObject.AddComponent<BasicDVPanelManager>();
+
+            _inFlight = _settings.AllowFlight;
 
 			if (HighLogic.LoadedSceneIsEditor)
 			{
@@ -199,7 +204,7 @@ namespace BasicDeltaV
 			if (!_loaded)
 				return;
 
-			if (!BasicDeltaV_Settings.Instance.DisplayActive)
+			if (!DisplayActive)
 				return;
 
 			if (!_readoutsAvailable)
@@ -465,10 +470,19 @@ namespace BasicDeltaV
 
 		public bool DisplayActive
 		{
-			get { return BasicDeltaV_Settings.Instance.DisplayActive; }
+			get
+            {
+                if (HighLogic.LoadedSceneIsEditor)
+                    return BasicDeltaV_Settings.Instance.DisplayActive;
+                else
+                    return BasicDeltaV_Settings.Instance.DisplayActiveFlight;
+            }
 			set
 			{
-				BasicDeltaV_Settings.Instance.DisplayActive = value;
+                if (HighLogic.LoadedSceneIsEditor)
+                    BasicDeltaV_Settings.Instance.DisplayActive = value;
+                else
+                    BasicDeltaV_Settings.Instance.DisplayActiveFlight = value;
 
 				if (panelHandler != null && value == false)
 					panelHandler.PanelHideDisplay();
