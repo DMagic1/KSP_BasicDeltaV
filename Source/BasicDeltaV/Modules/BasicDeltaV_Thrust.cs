@@ -27,9 +27,12 @@ namespace BasicDeltaV.Modules
 {
     public class BasicDeltaV_Thrust : BasicDeltaV_Module
     {
-		public BasicDeltaV_Thrust(string t, BasicDeltaV_StagePanel p)
+        private bool _activeStage;
+
+        public BasicDeltaV_Thrust(string t, bool active, BasicDeltaV_StagePanel p)
 			: base(t, p)
         {
+            _activeStage = active;
             _smallSize = true;
 			_fixedOrder = 3;
 			_simple = true;
@@ -40,10 +43,11 @@ namespace BasicDeltaV.Modules
 		{
 			if (_panel.Stage == null)
 				return "---";
-
-			double thrust = _panel.Stage.thrust;
-
-            return result(thrust);
+            
+            if (_activeStage)
+                return activeResult(_panel.Stage.actualThrust, _panel.Stage.thrust);
+            else
+                return result(_panel.Stage.thrust);
         }
 
 		private string result(double thrust)
@@ -60,6 +64,22 @@ namespace BasicDeltaV.Modules
 				return string.Format("{0:N2}MN", thrust / 1000);
 			else
 				return string.Format("{0:N1}MN", thrust / 1000);
+        }
+
+        private string activeResult(double thrust, double max)
+        {
+            if (thrust == 0)
+                return string.Format("0kN({0:N0})", max);
+            else if (thrust < 10)
+                return string.Format("{0:N2}kN({1:N0})", thrust, max);
+            else if (thrust < 100)
+                return string.Format("{0:N1}kN({1:N0})", thrust, max);
+            else if (thrust < 10000)
+                return string.Format("{0:N0}kN({1:N0})", thrust, max);
+            else if (thrust < 100000)
+                return string.Format("{0:N1}MN({1:N0})", thrust / 1000, max / 1000);
+            else
+                return string.Format("{0:N0}MN({1:N0})", thrust / 1000, max / 1000);
         }
     }
 }
