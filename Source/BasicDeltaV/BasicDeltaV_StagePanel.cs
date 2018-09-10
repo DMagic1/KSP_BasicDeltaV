@@ -118,11 +118,13 @@ namespace BasicDeltaV
 		{
 			modules.Clear();
 
-			if (BasicDeltaV_Settings.Instance.ShowDeltaV && !BasicDeltaV.Instance.ComplexRestrictions)
+            bool active = HighLogic.LoadedSceneIsFlight && index == StageManager.LastStage;
+
+            if (BasicDeltaV_Settings.Instance.ShowDeltaV && !BasicDeltaV.Instance.ComplexRestrictions)
 				modules.Add(new BasicDeltaV_DeltaV("ΔV", this));
 
 			if (BasicDeltaV_Settings.Instance.ShowTWR && !BasicDeltaV.Instance.SimpleRestrictions)
-				modules.Add(new BasicDeltaV_TWR("TWR", this));
+				modules.Add(new BasicDeltaV_TWR("TWR", active, this));
 
 			if (BasicDeltaV_Settings.Instance.ShowMass && !BasicDeltaV.Instance.SimpleRestrictions)
 				modules.Add(new BasicDeltaV_Mass("Mass", this));
@@ -134,7 +136,7 @@ namespace BasicDeltaV
 				modules.Add(new BasicDeltaV_ISP("ISP", this));
 
 			if (BasicDeltaV_Settings.Instance.ShowThrust && !BasicDeltaV.Instance.SimpleRestrictions)
-				modules.Add(new BasicDeltaV_Thrust("Thrust", this));
+				modules.Add(new BasicDeltaV_Thrust("Thrust", active, this));
         }
 
         private void CreatePanel(bool right, bool display)
