@@ -27,9 +27,12 @@ namespace BasicDeltaV.Modules
 {
     public class BasicDeltaV_TWR : BasicDeltaV_Module
     {
-		public BasicDeltaV_TWR(string t, BasicDeltaV_StagePanel p)
+        private bool _activeStage;
+
+		public BasicDeltaV_TWR(string t, bool active, BasicDeltaV_StagePanel p)
 			: base(t, p)
         {
+            _activeStage = active;
             _smallSize = true;
 			_fixedOrder = 1;
 			_simple = true;
@@ -44,15 +47,31 @@ namespace BasicDeltaV.Modules
 			double twr = _panel.Stage.thrustToWeight;
 			double maxTWR = _panel.Stage.maxThrustToWeight;
 
+            if (_activeStage)
+            {
+                twr = _panel.Stage.actualThrustToWeight;
+                maxTWR = _panel.Stage.thrustToWeight;
+            }
+
 			return result(twr, maxTWR);
         }
 
         private string result(double twr, double max)
-		{	
-			if (twr < 10 || max < 10)
-				return string.Format("{0:F2}({1:F2})", twr, max);
-			else if (twr < 100 || max < 100)
-				return string.Format("{0:F1}({1:F1})", twr, max);
+        {
+            if (twr == 0)
+            {
+                if (max < 10)
+                    return string.Format("0({0:F2})", max);
+                else if (max < 100)
+                    return string.Format("0({0:F1})", max);
+                else
+                    return string.Format("0({0:F0})", max);
+            }
+
+            if (twr < 10 || max < 10)
+                return string.Format("{0:F2}({1:F2})", twr, max);
+            else if (twr < 100 || max < 100)
+                return string.Format("{0:F1}({1:F1})", twr, max);
 
             return string.Format("{0:F0}({1:F0})", twr, max);
         }
