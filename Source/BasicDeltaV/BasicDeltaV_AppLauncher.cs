@@ -29,6 +29,7 @@ using BasicDeltaV.Unity.Unity;
 using KSP.UI;
 using KSP.UI.Screens;
 using UnityEngine;
+using System.IO;
 
 namespace BasicDeltaV
 {
@@ -58,8 +59,15 @@ namespace BasicDeltaV
         private void Start()
         {
             if (icon == null)
-                icon = GameDatabase.Instance.GetTexture("BasicDeltaV/Resources/AppIcon", false);
-			
+            {
+                icon = new Texture2D(38, 38, TextureFormat.ARGB32, false);
+
+                string path = Path.Combine(new DirectoryInfo(KSPUtil.ApplicationRootPath).FullName, "GameData/BasicDeltaV/Resources/AppIcon.png").Replace("\\", "/");
+
+                if (File.Exists(path))
+                    icon.LoadImage(File.ReadAllBytes(path));
+            }
+
             instance = this;
 
             if (buttonAdder != null)
