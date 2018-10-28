@@ -38,7 +38,8 @@ namespace BasicDeltaV
         private List<IBasicModule> modules = new List<IBasicModule>();
 
 		private RectTransform parent;
-        private BasicDeltaV_Panel panel;
+        private BasicDeltaV_SimplePanel panel;
+        private BasicDeltaV_SimpleDeltaVGauge simpleGauge;
 		private Stage stage;
 		private int index;
 		private bool rightPos;
@@ -61,22 +62,27 @@ namespace BasicDeltaV
 			set { stage = value; }
 		}
 
-        public BasicDeltaV_StagePanel(RectTransform rect, int i, bool right, bool display)
+        public BasicDeltaV_StagePanel(RectTransform rect, int i, bool right, bool display, BasicDeltaV_SimpleDeltaVGauge simple)
         {
 			parent = rect;
 			index = i;
 			rightPos = right;
 
+            simpleGauge = simple;
+
 			stage = BasicDeltaV.Instance.GetStage(i);
 
             StartModules();
 
-			CreatePanel(right, display && stage != null && stage.deltaV > 0);
+            if (simpleGauge != null)
+                simpleGauge.Expand(BasicDeltaV_Settings.Instance.MoreBasicMode, display && stage != null && stage.deltaV > 0, stage, index);
+
+            CreatePanel(right, display && stage != null && stage.deltaV > 0);
         }
 
 		public void RefreshModules()
 		{
-			//BasicDeltaV.BasicLogging("Panel Refresh - Index: {0}/{1} - Status: {2} - Position: {3}", index, StageManager.LastStage, panel == null ? "Null" : "Valid", rightPos);
+            //BasicDeltaV.BasicLogging("Panel Refresh - Index: {0}/{1} - Status: {2} - Position: {3}", index, StageManager.LastStage, panel == null ? "Null" : "Valid", rightPos);
 
 			if (panel != null)
 				panel.Close();
@@ -87,6 +93,12 @@ namespace BasicDeltaV
 
 			if (HighLogic.LoadedSceneIsFlight && BasicDeltaV_Settings.Instance.ShowCurrentStageOnly && index != StageManager.LastStage)
 				display = false;
+
+            if (simpleGauge != null)
+                simpleGauge.Expand(BasicDeltaV_Settings.Instance.MoreBasicMode, display && stage.deltaV > 0, stage, index);
+
+            if (!BasicDeltaV.Instance.DisplayActive)
+                return;
 
 			StartModules();
 
@@ -111,7 +123,7 @@ namespace BasicDeltaV
 		public void ToggleNoDVModules(bool isOn)
 		{
 			if (panel != null)
-				panel.ToggleNoDVModules(isOn);
+				panel.SetNoDVMode(isOn);
 		}
 
         private void StartModules()
@@ -121,44 +133,43 @@ namespace BasicDeltaV
             bool active = HighLogic.LoadedSceneIsFlight && index == StageManager.LastStage;
 
             if (BasicDeltaV_Settings.Instance.ShowDeltaV && !BasicDeltaV.Instance.ComplexRestrictions)
-				modules.Add(new BasicDeltaV_DeltaV("ΔV", this));
+				modules.Add(new BasicDeltaV_DeltaV("ΔV: ", this));
 
 			if (BasicDeltaV_Settings.Instance.ShowTWR && !BasicDeltaV.Instance.SimpleRestrictions)
-				modules.Add(new BasicDeltaV_TWR("TWR", active, this));
+				modules.Add(new BasicDeltaV_TWR("TWR: ", active, this));
 
 			if (BasicDeltaV_Settings.Instance.ShowMass && !BasicDeltaV.Instance.SimpleRestrictions)
-				modules.Add(new BasicDeltaV_Mass("Mass", this));
+				modules.Add(new BasicDeltaV_Mass("Mass: ", this));
 
 			if (BasicDeltaV_Settings.Instance.ShowBurnTime && !BasicDeltaV.Instance.ComplexRestrictions)
-				modules.Add(new BasicDeltaV_BurnTime("Burn Time", this));
+				modules.Add(new BasicDeltaV_BurnTime("Burn Time: ", this));
 
 			if (BasicDeltaV_Settings.Instance.ShowISP  && !BasicDeltaV.Instance.ComplexRestrictions)
-				modules.Add(new BasicDeltaV_ISP("ISP", this));
+				modules.Add(new BasicDeltaV_ISP("ISP: ", this));
 
 			if (BasicDeltaV_Settings.Instance.ShowThrust && !BasicDeltaV.Instance.SimpleRestrictions)
-				modules.Add(new BasicDeltaV_Thrust("Thrust", active, this));
+				modules.Add(new BasicDeltaV_Thrust("Thrust: ", active, this));
         }
 
         private void CreatePanel(bool right, bool display)
         {
-            if (BasicDeltaV_Loader.PanelPrefab == null || modules == null || modules.Count == 0)
+            if (BasicDeltaV_Loader.SimplePanelPrefab == null || modules == null || modules.Count == 0)
                 return;
 
-            panel = GameObject.Instantiate(BasicDeltaV_Loader.PanelPrefab).GetComponent<BasicDeltaV_Panel>();
-
-            if (panel == null)
-                return;
-
-            panel.transform.SetParent(parent, false);
+            panel = GameObject.Instantiate(BasicDeltaV_Loader.SimplePanelPrefab, parent, false).GetComponent<BasicDeltaV_SimplePanel>();
+            
 			panel.transform.SetAsFirstSibling();
 
-            panel.setPanel(modules, BasicDeltaV_Settings.Instance.PanelAlpha, HighLogic.LoadedSceneIsFlight);
+            panel.setPanel(modules, BasicDeltaV_Settings.Instance.PanelAlpha, HighLogic.LoadedSceneIsFlight, BasicDeltaV_Settings.Instance.MoreBasicMode);
 			
 			if (right)
 				panel.MovePanel(true);
 
-			if (!display)
-				panel.gameObject.SetActive(false);
+            if (!display)
+            {
+                panel.Unregister();
+                panel.gameObject.SetActive(false);
+            }
         }
 
 		public void MovePanel(bool right)
@@ -175,16 +186,22 @@ namespace BasicDeltaV
                 panel.SetAlpha(alpha);
         }
 
-		public void SetVisible(bool isOn)
-		{
-			if (panel == null)
-				return;
+        public void SetVisible(bool isOn)
+        {
+            if (panel == null)
+                return;
 
-			if (panel.gameObject.activeSelf && !isOn)
-				panel.gameObject.SetActive(false);
-			else if (!panel.gameObject.activeSelf && isOn)
-				panel.gameObject.SetActive(true);
-		}
+            if (panel.gameObject.activeSelf && !isOn)
+            {
+                panel.Unregister();
+                panel.gameObject.SetActive(false);
+            }
+            else if (!panel.gameObject.activeSelf && isOn)
+            {
+                panel.gameObject.SetActive(true);
+                panel.Register();
+            }
+        }
 
 		public void HidePanel(bool isOn)
 		{

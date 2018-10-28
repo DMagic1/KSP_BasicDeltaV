@@ -19,7 +19,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using CompoundParts;
 using UnityEngine;
@@ -44,7 +43,9 @@ namespace BasicDeltaV.Simulation
 		public bool hasModuleEngines;
 		public bool hasMultiModeEngine;
 
-		public bool hasVessel;
+        List<Part> chain = new List<Part>(); //prolly dont need a list, just the previous part but whatever.
+
+        public bool hasVessel;
 		public String initialVesselName;
 		public int inverseStage;
 		public int resPriorityOffset;
@@ -67,7 +68,9 @@ namespace BasicDeltaV.Simulation
 		public ResourceContainer resourceDrains = new ResourceContainer();
 		public ResourceContainer resourceFlowStates = new ResourceContainer();
 		public ResourceContainer resources = new ResourceContainer();
-		public double startMass = 0d;
+        public ResourceContainer maxResources = new ResourceContainer();
+        public ResourceContainer maxResourceFlowStates = new ResourceContainer();
+        public double startMass = 0d;
         public double crewMassOffset = 0d;
         public String vesselName;
 		public VesselType vesselType;
@@ -91,6 +94,7 @@ namespace BasicDeltaV.Simulation
 			partSim.resourceDrains.Reset();
 			partSim.resourceFlowStates.Reset();
 			partSim.resources.Reset();
+            partSim.maxResources.Reset();
 			partSim.parent = null;
 			partSim.baseCost = 0d;
 			partSim.baseMass = 0d;
@@ -124,7 +128,7 @@ namespace BasicDeltaV.Simulation
                 partSim.noCrossFeedNodeKey = "bottom";
             partSim.decoupledInStage = partSim.DecoupledInStage(p);
 			partSim.isFuelLine = p.HasModule<CModuleFuelLine>();
-			partSim.isSepratron = partSim.IsSepratron();
+			partSim.isSepratron = p.IsSepratron();
 			partSim.inverseStage = p.inverseStage;
 			if (log != null) log.AppendLine("inverseStage = ", partSim.inverseStage);
 			partSim.resPriorityOffset = p.resourcePriorityOffset;
@@ -193,6 +197,12 @@ namespace BasicDeltaV.Simulation
 				{
 					if (log != null) log.AppendLine(resource.resourceName, " is NaN. Skipping.");
 				}
+
+                if (!Double.IsNaN(resource.maxAmount))
+                {
+                    partSim.maxResources.Add(resource.info.id, resource.maxAmount);
+                    partSim.maxResourceFlowStates.Add(resource.info.id, resource.flowState ? 1 : 0);
+                }
 			}
 
 			partSim.hasVessel = (p.vessel != null);
@@ -395,7 +405,7 @@ namespace BasicDeltaV.Simulation
 
 			return mass;
 		}
-
+        
 		public double GetCost(int currentStage)
 		{
 			if (decoupledInStage >= currentStage)
@@ -744,7 +754,7 @@ namespace BasicDeltaV.Simulation
 
 			return thrustvec;
 		}
-        
+
         private int DecoupledInStage(Part thePart)
         {
             int stage = -1;
@@ -752,8 +762,8 @@ namespace BasicDeltaV.Simulation
 
             if (original.parent == null)
                 return stage; //root part is always present. Fixes phantom stage if root is stageable.
-
-            List<Part> chain = new List<Part>(); //prolly dont need a list, just the previous part but whatever.
+            
+            chain.Clear();
 
             while (thePart != null)
             {
@@ -774,7 +784,7 @@ namespace BasicDeltaV.Simulation
                         {
                             if (att != null)
                             {
-                                if ((thePart.parent != null && att.attachedPart == thePart.parent) || chain.Contains(att.attachedPart))
+                                if ((thePart.parent != null && att.attachedPart == thePart.parent) || att.attachedPart.ContainedPart(chain))
                                     stage = thePart.inverseStage;
                             }
                             else stage = thePart.inverseStage;
@@ -786,7 +796,7 @@ namespace BasicDeltaV.Simulation
                         AttachNode att = thePart.FindAttachNode(manch.explosiveNodeID); // these stupid fuckers don't initialize in the Editor scene.
                         if (att != null)
                         {
-                            if ((thePart.parent != null && att.attachedPart == thePart.parent) || chain.Contains(att.attachedPart))
+                            if ((thePart.parent != null && att.attachedPart == thePart.parent) || att.attachedPart.ContainedPart(chain))
                                 stage = thePart.inverseStage;
                         }
                         else stage = thePart.inverseStage; //radial decouplers it seems the attach node ('surface') comes back null.
@@ -805,7 +815,7 @@ namespace BasicDeltaV.Simulation
 
                 thePart = thePart.parent;
             }
-
+            
             return stage;
         }
         
@@ -821,17 +831,5 @@ namespace BasicDeltaV.Simulation
 
             return false;
         }
-
-        private bool IsSepratron()
-		{
-			if (!part.ActivatesEvenIfDisconnected)
-			{
-				return false;
-			}
-
-			IEnumerable<ModuleEngines> modList = part.Modules.OfType<ModuleEngines>();
-
-			return modList.Any(module => module.throttleLocked);
-		}
 	}
 }

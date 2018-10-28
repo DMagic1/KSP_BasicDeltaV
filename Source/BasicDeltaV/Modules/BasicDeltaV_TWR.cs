@@ -23,6 +23,8 @@
  */
 #endregion
 
+using System.Text;
+
 namespace BasicDeltaV.Modules
 {
     public class BasicDeltaV_TWR : BasicDeltaV_Module
@@ -37,6 +39,7 @@ namespace BasicDeltaV.Modules
 			_fixedOrder = 1;
 			_simple = true;
 			_dvModule = true;
+            _showInBasic = false;
         }
 
         protected override string fieldUpdate()
@@ -54,6 +57,29 @@ namespace BasicDeltaV.Modules
             }
 
 			return result(twr, maxTWR);
+        }
+
+        protected override void fieldUpdate(StringBuilder sb)
+        {
+            if (_panel.Stage == null)
+                return;
+
+            double twr = _panel.Stage.thrustToWeight;
+            double maxTWR = _panel.Stage.maxThrustToWeight;
+
+            if (_activeStage)
+            {
+                twr = _panel.Stage.actualThrustToWeight;
+                maxTWR = _panel.Stage.thrustToWeight;
+            }
+
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.LabelColorHex);
+            sb.Append(ModuleTitle);
+            sb.Append(COLOR_CLOSE_TAG);
+
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.ReadoutColorHex);
+            result(sb, twr, maxTWR);
+            sb.Append(COLOR_CLOSE_TAG);
         }
 
         private string result(double twr, double max)
@@ -74,6 +100,25 @@ namespace BasicDeltaV.Modules
                 return string.Format("{0:F1}({1:F1})", twr, max);
 
             return string.Format("{0:F0}({1:F0})", twr, max);
+        }
+
+        private void result(StringBuilder sb, double twr, double max)
+        {
+            if (twr == 0)
+            {
+                if (max < 10)
+                    sb.AppendFormat("0({0:F2})", max);
+                else if (max < 100)
+                    sb.AppendFormat("0({0:F1})", max);
+                else
+                    sb.AppendFormat("0({0:F0})", max);
+            }
+            else if (twr < 10 || max < 10)
+                sb.AppendFormat("{0:F2}({1:F2})", twr, max);
+            else if (twr < 100 || max < 100)
+                sb.AppendFormat("{0:F1}({1:F1})", twr, max);
+            else
+                sb.AppendFormat("{0:F0}({1:F0})", twr, max);
         }
     }
 }

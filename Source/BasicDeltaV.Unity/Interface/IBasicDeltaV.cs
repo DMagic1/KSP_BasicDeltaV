@@ -40,6 +40,8 @@ namespace BasicDeltaV.Unity.Interface
 
 		bool DisplayActive { get; set; }
 
+        bool MoreBasicMode { get; set; }
+
 		bool ShowDeltaV { get; set; }
 
 		bool ShowTWR { get; set; }

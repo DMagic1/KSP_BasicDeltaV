@@ -23,6 +23,7 @@
  */
 #endregion
 
+using System.Text;
 using BasicDeltaV.Unity.Interface;
 using UnityEngine;
 
@@ -73,6 +74,14 @@ namespace BasicDeltaV.Unity.Unity
             moduleInterface.Update();
 
             m_TextModule.OnTextUpdate.Invoke(moduleInterface.ModuleText);
+        }
+
+        public void UpdateModule(StringBuilder sb)
+        {
+            if (moduleInterface == null)
+                return;
+
+            moduleInterface.Update(sb);
         }
     }
 }

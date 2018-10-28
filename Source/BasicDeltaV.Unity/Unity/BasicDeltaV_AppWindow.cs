@@ -42,7 +42,9 @@ namespace BasicDeltaV.Unity.Unity
         private TextHandler m_VersionText = null;
 		[SerializeField]
 		private StateToggle m_DisplayToggle = null;
-		[SerializeField]
+        [SerializeField]
+        private StateToggle m_MoreBasicToggle = null;
+        [SerializeField]
 		private StateToggle m_CurrentStage = null;
         [SerializeField]
         private Toggle m_BodyToggle = null;
@@ -242,6 +244,13 @@ namespace BasicDeltaV.Unity.Unity
 			if (m_DisplayToggle != null)
 				m_DisplayToggle.isOn = basic.DisplayActive;
 
+            if (m_MoreBasicToggle != null)
+            {
+                m_MoreBasicToggle.isOn = basic.MoreBasicMode;
+
+                m_MoreBasicToggle.gameObject.SetActive(basic.ShowCurrentStageBar);
+            }
+
 			if (m_CurrentStage != null)
 			{
 				m_CurrentStage.isOn = basic.CurrentStageOnly;
@@ -391,6 +400,12 @@ namespace BasicDeltaV.Unity.Unity
 			if (m_DisplayToggle != null)
 				m_DisplayToggle.isOn = isOn;
 		}
+
+        public void SetAtmosphereToggle(bool isOn)
+        {
+            if (m_AtmosphereToggle != null)
+                m_AtmosphereToggle.isOn = isOn;
+        }
 
 		public void SetStagingScale(float scale)
 		{
@@ -601,7 +616,29 @@ namespace BasicDeltaV.Unity.Unity
 			basicInterface.CurrentStageOnly = isOn;
 		}
 
-		public void StageScaleEditorOnly(bool isOn)
+        public void ToggleMoreBasic(bool isOn)
+        {
+            if (basicInterface == null || !loaded)
+                return;
+
+            basicInterface.MoreBasicMode = isOn;
+
+            //if (isOn)
+            //    m_DeltaVToggle.isOn = false;
+            //else
+            //    m_DeltaVToggle.isOn = basicInterface.ShowDeltaV;
+
+            m_DeltaVToggle.gameObject.SetActive(!isOn);
+
+            //if (isOn)
+            //    m_TWRToggle.isOn = false;
+            //else
+            //    m_TWRToggle.isOn = basicInterface.ShowTWR;
+
+            m_TWRToggle.gameObject.SetActive(!isOn);
+        }
+
+        public void StageScaleEditorOnly(bool isOn)
 		{
 			if (basicInterface == null || !loaded)
 				return;

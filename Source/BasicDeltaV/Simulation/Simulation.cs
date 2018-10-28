@@ -53,7 +53,8 @@ namespace BasicDeltaV.Simulation
 		private int lastStage;
 		private List<Part> partList;
 		private double simpleTotalThrust;
-		private double stageStartMass;
+        private double simpleActualTotalThrust;
+        private double stageStartMass;
 		private Vector3d stageStartCom;
 		private double stageTime;
 		private double stepEndMass;
@@ -66,7 +67,11 @@ namespace BasicDeltaV.Simulation
 		private Vector3 vecActualThrust;
 		private Vector3 vecStageDeltaV;
 		private Vector3 vecThrust;
-		private double mach;
+        private double totalExhaustVelocity;
+        private double totalActualExhaustVelocity;
+        private Vector3 totalVectoredExhaustVelocity;
+        private Vector3 totalActualVectoredExhaustVelocity;
+        private double mach;
 		private float maxMach;
 		public String vesselName;
 		public VesselType vesselType;
@@ -103,7 +108,7 @@ namespace BasicDeltaV.Simulation
 				return mass;
 			}
 		}
-
+        
 		private Vector3d ShipCom
 		{
 			get
@@ -180,12 +185,12 @@ namespace BasicDeltaV.Simulation
 				{
 					allFuelLines.Add(partSim);
 				}
-				if (partSim.isEngine)
-				{
-					partSim.CreateEngineSims(allEngines, atmosphere, mach, vectoredThrust, fullThrust, log);
-				}
+                if (partSim.isEngine)
+                {
+                    partSim.CreateEngineSims(allEngines, atmosphere, mach, vectoredThrust, fullThrust, log);
+                }
 
-				partId++;
+                partId++;
 			}
 
 			for (int i = 0; i < allEngines.Count; ++i)
@@ -370,12 +375,22 @@ namespace BasicDeltaV.Simulation
 
 				CalculateThrustAndISP();
 
-				// Store various things in the Stage object
+                stage.startMass = stageStartMass;
+
+                // Store various things in the Stage object
+                stage.simpleThrust = simpleTotalThrust;
+                stage.actualSimpleThrust = simpleActualTotalThrust;
 				stage.thrust = totalStageThrust;
 				stage.thrustToWeight = totalStageThrust / (stageStartMass * gravity);
 				stage.maxThrustToWeight = stage.thrustToWeight;
 				stage.actualThrust = totalStageActualThrust;
 				stage.actualThrustToWeight = totalStageActualThrust / (stageStartMass * gravity);
+                stage.thrustVector = vecThrust;
+                stage.actualThrustVector = vecActualThrust;
+                stage.totalExhaustVelocity = totalExhaustVelocity;
+                stage.totalActualExhaustVelocity = totalActualExhaustVelocity;
+                stage.totalVectoredExhaustVelocity = totalVectoredExhaustVelocity;
+                stage.totalVectoredActualExhaustVelocity = totalActualVectoredExhaustVelocity;
 				if (log != null)
 				{
 					log.AppendLine("stage.thrust = ", stage.thrust);
@@ -487,6 +502,8 @@ namespace BasicDeltaV.Simulation
 					stepEndMass = ShipMass;
 					stageTime += resourceDrainTime;
 
+                    stage.endMass = stepEndMass;
+
 					double stepEndTWR = totalStageThrust / (stepEndMass * gravity);
 					/*if (log != null)
 					{
@@ -537,10 +554,12 @@ namespace BasicDeltaV.Simulation
 					stepStartMass = stepEndMass;
 				}
 
-				// Store more values in the Stage object and stick it in the array
+                //stage.stageTotalDeltaV = (vecThrust * (float)((currentisp * GRAVITY * Math.Log(stage.startMass / stage.endMass)) / simpleTotalThrust)).magnitude;
 
-				// Store the magnitude of the deltaV vector
-				stage.deltaV = vecStageDeltaV.magnitude;
+                // Store more values in the Stage object and stick it in the array
+
+                // Store the magnitude of the deltaV vector
+                stage.deltaV = vecStageDeltaV.magnitude;
 				stage.resourceMass = stageStartMass - stepEndMass;
 
 				// Recalculate effective stage isp from the stage deltaV (flip the standard deltaV calculation around)
@@ -752,7 +771,12 @@ namespace BasicDeltaV.Simulation
 			// Reset all the values
 			vecThrust = Vector3.zero;
 			vecActualThrust = Vector3.zero;
-			simpleTotalThrust = 0d;
+            totalVectoredExhaustVelocity = Vector3.zero;
+            totalActualVectoredExhaustVelocity = Vector3.zero;
+            totalExhaustVelocity = 0;
+            totalActualExhaustVelocity = 0;
+            simpleTotalThrust = 0d;
+            simpleActualTotalThrust = 0d;
 			totalStageThrust = 0d;
 			totalStageActualThrust = 0d;
 			totalStageFlowRate = 0d;
@@ -766,8 +790,15 @@ namespace BasicDeltaV.Simulation
 				EngineSim engine = activeEngines[i];
 
 				simpleTotalThrust += engine.thrust;
+                simpleActualTotalThrust += engine.actualThrust;
 				vecThrust += ((float)engine.thrust * engine.thrustVec);
 				vecActualThrust += ((float)engine.actualThrust * engine.thrustVec);
+
+                totalVectoredExhaustVelocity += engine.thrustVec * (float)((engine.isp * BasicDeltaV.GRAVITY) / engine.thrust);
+                totalExhaustVelocity += totalVectoredExhaustVelocity.magnitude;
+
+                totalActualVectoredExhaustVelocity += engine.thrustVec * (float)((engine.isp * BasicDeltaV.GRAVITY) / engine.actualThrust);
+                totalActualExhaustVelocity += totalActualVectoredExhaustVelocity.magnitude;
 
 				totalStageFlowRate += engine.ResourceConsumptions.Mass;
 				totalStageIspFlowRate += engine.ResourceConsumptions.Mass * engine.isp;

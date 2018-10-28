@@ -31,15 +31,19 @@ using System.Reflection;
 using BasicDeltaV.Simulation;
 using BasicDeltaV.Unity.Interface;
 using UnityEngine;
+using UnityEngine.UI;
 using BasicDeltaV.Unity;
 using KSP.UI;
 using KSP.UI.Screens;
+using KSP.UI.Screens.Flight;
 
 namespace BasicDeltaV
 {
     [KSPAddon(KSPAddon.Startup.FlightAndEditor, false)]
     public class BasicDeltaV : MonoBehaviour, IBasicDeltaV
     {
+        public const double GRAVITY = 9.80665;
+
         private static BasicDeltaV instance = null;
 		private static bool _inFlight;
 		private static bool _readoutsAvailable;
@@ -66,6 +70,10 @@ namespace BasicDeltaV
 		private int numberOfStages;
 		private int stagesCount;
 		private Stage[] stages;
+
+        private VesselDeltaV _vesselDeltaV;
+
+        private BasicDeltaV_TWRGauge _twrGauge;
         
         public static BasicDeltaV Instance
         {
@@ -81,6 +89,21 @@ namespace BasicDeltaV
 		{
 			get { return _readoutsAvailable; }
 		}
+
+        public double ActiveStageTWR
+        {
+            get
+            {
+                if (SimManager.LastStage != null)
+                {
+                    double grav = FlightGlobals.currentMainBody.gravParameter / Math.Pow(FlightGlobals.currentMainBody.Radius, 2);
+
+                    return SimManager.LastStage.thrust / (SimManager.LastStage.totalMass * grav);
+                }
+
+                return 0;
+            }
+        }
 
         private void Awake()
         {
@@ -127,7 +150,11 @@ namespace BasicDeltaV
 
 				CheckVesselCrew(FlightGlobals.ActiveVessel);
 
-				_currentBody = FlightGlobals.currentMainBody;
+                DeactivateDeltaV(FlightGlobals.ActiveVessel);
+
+                _currentBody = FlightGlobals.currentMainBody;
+
+                StartCoroutine(WaitForNavball(BasicDeltaV_Settings.Instance.MoreBasicMode));
 			}
 
 			GameEvents.StageManager.OnGUIStageSequenceModified.Add(OnStageModify);
@@ -177,8 +204,54 @@ namespace BasicDeltaV
 					StageManager.Instance.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, _stageHeight / scale);
 				}
 			}
-
 		}
+
+        private IEnumerator WaitForNavball(bool active)
+        {
+            NavBall navball = null;
+
+            yield return null;
+
+            while (navball == null)
+            {
+                navball = FindObjectOfType<NavBall>();
+
+                yield return null;
+            }
+
+            GeeGauge gauge = navball.transform.parent.GetComponentInChildren<GeeGauge>();
+
+            GameObject twr = Instantiate(gauge, gauge.transform.parent).gameObject;
+            twr.name = "TWRGaugePointer";
+            
+            RotationalGauge rotGeeGauge = twr.GetComponent<RotationalGauge>();
+            
+            Destroy(twr.GetComponent<GeeGauge>());
+            
+            _twrGauge = twr.AddComponent<BasicDeltaV_TWRGauge>();
+            
+            _twrGauge.gauge = rotGeeGauge;
+
+            //BasicLogging("Gee Gauge Rot: {0:F6}", new Vector2(rotGeeGauge.minRot, rotGeeGauge.maxRot));
+
+            _twrGauge.gauge.minValue = 0;
+            _twrGauge.gauge.maxValue = 3;
+            _twrGauge.gauge.logarithmic = 10;
+
+            _twrGauge.gauge.minRot = -27.5f;
+
+            Image gaugeImage = _twrGauge.GetComponentInChildren<Image>();
+
+            gaugeImage.gameObject.name = "TWRGaugePointerImage";
+
+            RectTransform rotRect = gaugeImage.rectTransform;
+
+            rotRect.anchoredPosition = new Vector2(rotRect.anchoredPosition.x + 20, rotRect.anchoredPosition.y);
+            
+            gaugeImage.sprite = BasicDeltaV_Loader.TWRGaugeSprite;
+
+            _twrGauge.gameObject.SetActive(active);
+        }
 
         private void OnDestroy()
         {
@@ -204,7 +277,7 @@ namespace BasicDeltaV
 			if (!_loaded)
 				return;
 
-			if (!DisplayActive)
+			if (!DisplayActive && !MoreBasicMode)
 				return;
 
 			if (!_readoutsAvailable)
@@ -227,56 +300,119 @@ namespace BasicDeltaV
 					numberOfStages = stagesCount;
 			}
 
-			try
-			{
-				if (HighLogic.LoadedSceneIsEditor)
-				{
-					SimManager.Gravity = _currentBody.GeeASL * 9.81;
+            try
+            {
+                if (HighLogic.LoadedSceneIsEditor)
+                {
+                    SimManager.Gravity = _currentBody.GeeASL * GRAVITY;
 
-					if (Atmosphere)
-						SimManager.Atmosphere = _currentBody.GetPressure(_atmosphereDepth) * PhysicsGlobals.KpaToAtmospheres;
-					else
-						SimManager.Atmosphere = 0;
+                    if (Atmosphere)
+                        SimManager.Atmosphere = _currentBody.GetPressure(_atmosphereDepth) * PhysicsGlobals.KpaToAtmospheres;
+                    else
+                        SimManager.Atmosphere = 0;
 
-					SimManager.Mach = _mach;
+                    SimManager.Mach = _mach;
 
-					SimManager.RequestSimulation();
-					SimManager.TryStartSimulation();
-				}
-				else
-				{
-					SimManager.RequestSimulation();
-					SimManager.TryStartSimulation();
+                    SimManager.RequestSimulation();
+                    SimManager.TryStartSimulation();
+                }
+                else
+                {
+                    SimManager.RequestSimulation();
+                    SimManager.TryStartSimulation();
 
-					if (SimManager.ResultsReady())
-					{
-						if (FlightGlobals.ActiveVessel != null)
-						{
-							SimManager.Gravity = FlightGlobals.ActiveVessel.mainBody.gravParameter / Math.Pow(FlightGlobals.ActiveVessel.mainBody.Radius + FlightGlobals.ActiveVessel.mainBody.GetAltitude(FlightGlobals.ActiveVessel.CoM), 2);
+                    if (SimManager.ResultsReady())
+                    {
+                        if (FlightGlobals.ActiveVessel != null)
+                        {
+                            SimManager.Gravity = FlightGlobals.ActiveVessel.mainBody.gravParameter / Math.Pow(FlightGlobals.ActiveVessel.mainBody.Radius + FlightGlobals.ActiveVessel.mainBody.GetAltitude(FlightGlobals.ActiveVessel.CoM), 2);
 
-							SimManager.Mach = FlightGlobals.ActiveVessel.mach;
-						}
-					}
-				}
-			}
-			catch (Exception e)
-			{
-				BasicLogger.Exception(e, "BasicDeltaV.Update()");
-			}
+                            SimManager.Mach = FlightGlobals.ActiveVessel.mach;
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                BasicLogger.Exception(e, "BasicDeltaV.Update()");
+            }
 
-			if (_panelRefreshTimer < _panelRefreshWait)
-			{
-				_panelRefreshTimer++;
-				return;
-			}
+            if (!DisplayActive)
+                return;
 
-			_panelRefreshTimer = 0;
+            if (_panelRefreshTimer < _panelRefreshWait)
+            {
+                _panelRefreshTimer++;
+                return;
+            }
 
-			if (panelHandler != null)
-				panelHandler.UpdatePanels();
-		}
+            _panelRefreshTimer = 0;
 
-		private void CrewModified(Vessel v)
+            if (panelHandler != null)
+                panelHandler.UpdatePanels();
+        }
+
+        private void FixedUpdate()
+        {
+            if (!HighLogic.LoadedSceneIsFlight)
+                return;
+
+            if (FlightGlobals.ActiveVessel == null)
+                return;
+
+            if (_vesselDeltaV == null)
+                return;
+
+            if (_vesselDeltaV.enabled)
+                _vesselDeltaV.enabled = false;
+
+            for (int i = _vesselDeltaV.stageInfo.Count - 1; i >= 0; i--)
+            {
+                DeltaVStageInfo info = _vesselDeltaV.stageInfo[i];
+
+                Stage stage = GetStage(info.stage);
+
+                if (stage == null)
+                    continue;
+
+                info.deltaVActual = (float)stage.deltaV;
+                info.deltaVatASL = info.deltaVActual;
+                info.deltaVinVac = info.deltaVActual;
+
+                info.TWRActual = (float)(stage.actualThrust / (stage.startMass * FlightGlobals.currentMainBody.GeeASL * GRAVITY));
+                info.TWRASL = (float)(stage.thrust / (stage.startMass * FlightGlobals.currentMainBody.GeeASL * GRAVITY));
+                info.TWRVac = info.TWRASL;
+
+                info.stageMass = (float)stage.mass;
+                info.startMass = (float)stage.startMass;
+                info.endMass = (float)stage.endMass;
+                info.fuelMass = (float)stage.resourceMass;
+
+                info.thrustActual = (float)stage.actualSimpleThrust;
+                info.thrustASL = (float)stage.simpleThrust;
+                info.thrustVac = info.thrustASL;
+
+                info.vectoredThrustActual = (float)stage.actualThrust;
+                info.vectoredThrustASL = (float)stage.thrust;
+                info.vectoredThrustVac = info.vectoredThrustASL;
+
+                info.ispActual = (float)stage.isp;
+                info.ispASL = (float)stage.isp;
+                info.ispVac = info.ispASL;
+
+                info.totalExhaustVelocityActual = (float)stage.totalActualExhaustVelocity;
+                info.totalExhaustVelocityASL = (float)stage.totalExhaustVelocity;
+                info.totalExhaustVelocityVAC = info.totalExhaustVelocityASL;
+
+                info.vectoredExhaustVelocityActual = stage.totalVectoredActualExhaustVelocity;
+                info.vectoredExhaustVelocityASL = stage.totalVectoredExhaustVelocity;
+                info.vectoredExhaustVelocityVAC = info.vectoredExhaustVelocityASL;
+
+                info.stageBurnTime = (float)stage.time;
+            }
+        }
+
+        private void CrewModified(Vessel v)
 		{
 			if (!HighLogic.LoadedSceneIsFlight)
 				return;
@@ -289,13 +425,26 @@ namespace BasicDeltaV
 
 			CheckVesselCrew(v);
 
+            DeactivateDeltaV(v);
+
 			appLauncher.ToggleButtonState(_readoutsAvailable);
 
 			if (panelHandler != null)
 				panelHandler.RefreshPanels();
 		}
+        
+        private void DeactivateDeltaV(Vessel v)
+        {
+            if (v != FlightGlobals.ActiveVessel)
+                return;
 
-		private void CheckVesselCrew(Vessel v)
+            _vesselDeltaV = v.VesselDeltaV;
+            _vesselDeltaV.StopAllCoroutines();
+
+            v.VesselDeltaV.enabled = false;
+        }
+
+        private void CheckVesselCrew(Vessel v)
 		{
 			if (!HighLogic.LoadedSceneIsFlight)
 				return;
@@ -419,6 +568,7 @@ namespace BasicDeltaV
 		private void GetStageInfo()
 		{
 			stages = SimManager.Stages;
+
 			if (stages != null && stages.Length > 0)
 				_maxMach = stages[stages.Length - 1].maxMach;
 		}
@@ -435,10 +585,8 @@ namespace BasicDeltaV
 
 			for (int i = stages.Length - 1; i >= 0; i--)
 			{
-				Stage stage = stages[i];
-
-				if (stage.number == index)
-					return stage;
+				if (stages[i].number == index)
+					return stages[i];
 			}
 
 			return null;
@@ -620,7 +768,22 @@ namespace BasicDeltaV
 			}
 		}
 
-		public bool ShowCurrentStageBar
+        public bool MoreBasicMode
+        {
+            get { return BasicDeltaV_Settings.Instance.MoreBasicMode; }
+            set
+            {
+                BasicDeltaV_Settings.Instance.MoreBasicMode = value;
+
+                if (panelHandler != null)
+                    panelHandler.RefreshPanels();
+
+                if (_twrGauge != null)
+                    _twrGauge.gameObject.SetActive(value);
+            }
+        }
+
+        public bool ShowCurrentStageBar
 		{
 			get { return HighLogic.LoadedSceneIsFlight; }
 		}

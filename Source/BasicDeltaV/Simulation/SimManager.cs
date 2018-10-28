@@ -40,10 +40,12 @@ namespace BasicDeltaV.Simulation
 		public static bool dumpTree = false;
 		public static bool logOutput = false;
 		public static LogMsg log = new LogMsg();
-		public static TimeSpan minSimTime = new TimeSpan(0, 0, 0, 0, 150);
+		public static TimeSpan minSimTime = new TimeSpan(0, 0, 0, 0, 200);
 		public static bool vectoredThrust = false;
 		private static readonly object locker = new object();
 		private static readonly Stopwatch timer = new Stopwatch();
+
+        private static readonly WaitCallback _runSim = new WaitCallback(RunSimulation);
 
 		private static bool bRequested;
 		private static bool bRunning;
@@ -294,7 +296,7 @@ namespace BasicDeltaV.Simulation
 		{
 			try
 			{
-				Stages = (simObject as Simulation).RunSimulation(logOutput ? log : null);
+				Stages = (simObject as Simulation).RunSimulation(null);
 
 				if (Stages != null && Stages.Length > 0)
 				{
@@ -371,9 +373,9 @@ namespace BasicDeltaV.Simulation
 				}
 
 				// This call doesn't ever fail at the moment but we'll check and return a sensible error for display
-				if (simulation.PrepareSimulation(logOutput ? log : null, parts, Gravity, Atmosphere, Mach, dumpTree, vectoredThrust))
+				if (simulation.PrepareSimulation(null, parts, Gravity, Atmosphere, Mach, dumpTree, vectoredThrust))
 				{
-					ThreadPool.QueueUserWorkItem(RunSimulation, simulation);
+					ThreadPool.QueueUserWorkItem(_runSim, simulation);
 					//RunSimulation(simulation);
 				}
 				else

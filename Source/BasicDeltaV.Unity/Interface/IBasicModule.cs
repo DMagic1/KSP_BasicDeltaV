@@ -22,6 +22,7 @@
  * 
  */
 #endregion
+using System.Text;
 
 namespace BasicDeltaV.Unity.Interface
 {
@@ -35,10 +36,16 @@ namespace BasicDeltaV.Unity.Interface
 
 		bool DVModule { get; }
 
+        bool ShowInBasic { get; }
+
+        bool LineBreak { get; set; }
+
         int Order { get; set; }
 
 		int FixedOrder { get; }
         
         void Update();
+
+        void Update(StringBuilder sb);
     }
 }

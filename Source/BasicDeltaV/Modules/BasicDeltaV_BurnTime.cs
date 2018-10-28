@@ -40,6 +40,7 @@ namespace BasicDeltaV.Modules
             _fixedOrder = 2;
 			_simple = false;
 			_dvModule = true;
+            _showInBasic = true;
         }
 
         protected override string fieldUpdate()
@@ -52,7 +53,31 @@ namespace BasicDeltaV.Modules
             return result(time, 3);
         }
 
-		private string result(double time, int values)
+        protected override void fieldUpdate(StringBuilder sb)
+        {
+            if (_panel.Stage == null)
+                return;
+
+            double time = _panel.Stage.time;
+            
+            if (double.IsNaN(time) || double.IsInfinity(time))
+                return;
+
+            if (time >= int.MaxValue)
+                return;
+            else if (time <= int.MinValue)
+                return;
+
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.LabelColorHex);
+            sb.Append(ModuleTitle);
+            sb.Append(COLOR_CLOSE_TAG);
+
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.ReadoutColorHex);
+            result(sb, time, 3);
+            sb.Append(COLOR_CLOSE_TAG);
+        }
+
+        private string result(double time, int values)
 		{
 			if (time == 0)
 				return "0s";
@@ -94,6 +119,40 @@ namespace BasicDeltaV.Modules
 
 			return sb.ToStringAndRelease();
 		}
+
+        private void result(StringBuilder sb, double time, int values)
+        {
+            if (time == 0)
+            {
+                sb.Append("0s");
+                return;
+            }
+
+            SetTimes(time);
+
+            for (int i = times.Length - 1; i >= 0; i--)
+            {
+                int t = times[i];
+
+                if (t == 0)
+                {
+                    if (i < times.Length - 1 && times[i + 1] == 0)
+                        continue;
+                    else if (i >= times.Length - 1)
+                        continue;
+                }
+
+                if (values <= 0)
+                    continue;
+
+                sb.AppendFormat("{0}{1}", Math.Abs(t), units[i]);
+
+                if (values > 1 && i > 0)
+                    sb.Append(",");
+
+                values--;
+            }
+        }
 
 		private void SetTimes(double d)
 		{

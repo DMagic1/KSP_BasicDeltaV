@@ -23,6 +23,8 @@
  */
 #endregion
 
+using System.Text;
+
 namespace BasicDeltaV.Modules
 {
     public class BasicDeltaV_Thrust : BasicDeltaV_Module
@@ -37,6 +39,7 @@ namespace BasicDeltaV.Modules
 			_fixedOrder = 3;
 			_simple = true;
 			_dvModule = true;
+            _showInBasic = true;
         }
 
         protected override string fieldUpdate()
@@ -50,7 +53,26 @@ namespace BasicDeltaV.Modules
                 return result(_panel.Stage.thrust);
         }
 
-		private string result(double thrust)
+        protected override void fieldUpdate(StringBuilder sb)
+        {
+            if (_panel.Stage == null)
+                return;
+
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.LabelColorHex);
+            sb.Append(ModuleTitle);
+            sb.Append(COLOR_CLOSE_TAG);
+
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.ReadoutColorHex);
+
+            if (_activeStage)
+                activeResult(sb, _panel.Stage.actualThrust, _panel.Stage.thrust);
+            else
+                result(sb, _panel.Stage.thrust);
+
+            sb.Append(COLOR_CLOSE_TAG);
+        }
+
+        private string result(double thrust)
         {
 			if (thrust < 10)
 				return string.Format("{0:N3}kN", thrust);
@@ -80,6 +102,38 @@ namespace BasicDeltaV.Modules
                 return string.Format("{0:N1}MN({1:N0})", thrust / 1000, max / 1000);
             else
                 return string.Format("{0:N0}MN({1:N0})", thrust / 1000, max / 1000);
+        }
+
+        private void result(StringBuilder sb, double thrust)
+        {
+            if (thrust < 10)
+                sb.AppendFormat("{0:N3}kN", thrust);
+            else if (thrust < 100)
+                sb.AppendFormat("{0:N2}kN", thrust);
+            else if (thrust < 1000)
+                sb.AppendFormat("{0:N1}kN", thrust);
+            else if (thrust < 10000)
+                sb.AppendFormat("{0:N0}kN", thrust);
+            else if (thrust < 100000)
+                sb.AppendFormat("{0:N2}MN", thrust / 1000);
+            else
+                sb.AppendFormat("{0:N1}MN", thrust / 1000);
+        }
+
+        private void activeResult(StringBuilder sb, double thrust, double max)
+        {
+            if (thrust == 0)
+                sb.AppendFormat("0kN({0:N0})", max);
+            else if (thrust < 10)
+                sb.AppendFormat("{0:N2}kN({1:N0})", thrust, max);
+            else if (thrust < 100)
+                sb.AppendFormat("{0:N1}kN({1:N0})", thrust, max);
+            else if (thrust < 10000)
+                sb.AppendFormat("{0:N0}kN({1:N0})", thrust, max);
+            else if (thrust < 100000)
+                sb.AppendFormat("{0:N1}MN({1:N0})", thrust / 1000, max / 1000);
+            else
+                sb.AppendFormat("{0:N0}MN({1:N0})", thrust / 1000, max / 1000);
         }
     }
 }
