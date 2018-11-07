@@ -46,7 +46,7 @@ namespace BasicDeltaV
 				Destroy(this);
 				return;
 			}
-			else if (HighLogic.LoadedSceneIsFlight && !BasicDeltaV.AvailableInFlight)
+			else if (HighLogic.LoadedSceneIsFlight && !BasicDeltaV.ReadoutsAvailable)
 			{
 				Destroy(this);
 				return;

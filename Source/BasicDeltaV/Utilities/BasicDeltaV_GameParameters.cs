@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
-
+﻿
 namespace BasicDeltaV
 {
 	public class BasicDeltaV_GameParameters : GameParameters.CustomParameterNode
@@ -24,6 +21,8 @@ namespace BasicDeltaV
 		public int SimpleRestrictionLevel = 1;
 		[GameParameters.CustomIntParameterUI("Complex Restriction Level", toolTip = "Level at or above which complex (deltaV, ISP, burn time) data is shown", minValue = 0, maxValue = 5, autoPersistance = true)]
 		public int ComplexRestrictionLevel = 3;
+        [GameParameters.CustomParameterUI("Disable Stock DeltaV", toolTip = "Disable all stock deltaV calculations; does not affect navball maneuver node information", autoPersistance = true)]
+        public bool DisableStockDeltaV = true;
 
 		public override string Title
 		{
@@ -32,12 +31,12 @@ namespace BasicDeltaV
 
 		public override string Section
 		{
-			get { return "DMagic Mods"; }
+			get { return "Basic DeltaV"; }
 		}
 
 		public override string DisplaySection
 		{
-			get { return "DMagic Mods"; }
+			get { return "Basic DeltaV"; }
 		}
 
 		public override int SectionOrder
