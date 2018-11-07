@@ -30,6 +30,7 @@ namespace BasicDeltaV.Simulation
 		public double cost = 0.0;
 		public double deltaV = 0.0;
         public double stageStartDeltaV = 0.0;
+        public double totalStartDeltaV = 0.0;
         public double inverseTotalDeltaV = 0.0;
 		public double isp = 0.0;
 		public double mass = 0.0;
@@ -48,6 +49,7 @@ namespace BasicDeltaV.Simulation
 		public int partCount = 0;
 		public double resourceMass = 0.0;
         public double resourceFullMass = 0.0;
+        public double stageFullMass = 0.0;
         public double startMass = 0.0;
         public double endMass = 0.0;
         public double maxThrustTorque = 0.0;
@@ -68,11 +70,15 @@ namespace BasicDeltaV.Simulation
 			log.buf.AppendFormat("time          : {0:g6}\n", this.time);
 			log.buf.AppendFormat("totalTime     : {0:g6}\n", this.totalTime);
 			log.buf.AppendFormat("mass          : {0:g6}\n", this.mass);
-			log.buf.AppendFormat("totalMass     : {0:g6}\n", this.totalMass);
+            log.buf.AppendFormat("fullMass      : {0:g6}\n", this.stageFullMass);
+            log.buf.AppendFormat("resourceMass  : {0:g6}\n", this.resourceMass);
+            log.buf.AppendFormat("endMass       : {0:g6}\n", this.endMass);
+            log.buf.AppendFormat("totalMass     : {0:g6}\n", this.totalMass);
 			log.buf.AppendFormat("isp           : {0:g6}\n", this.isp);
 			log.buf.AppendFormat("thrust        : {0:g6}\n", this.thrust);
 			log.buf.AppendFormat("actualThrust  : {0:g6}\n", this.actualThrust);
-			log.buf.AppendFormat("thrustToWeight: {0:g6}\n", this.thrustToWeight);
+            log.buf.AppendFormat("simpleThrust  : {0:g6}\n", this.simpleThrust);
+            log.buf.AppendFormat("thrustToWeight: {0:g6}\n", this.thrustToWeight);
 			log.buf.AppendFormat("maxTWR        : {0:g6}\n", this.maxThrustToWeight);
 			log.buf.AppendFormat("actualTWR     : {0:g6}\n", this.actualThrustToWeight);
 			log.buf.AppendFormat("ThrustTorque  : {0:g6}\n", this.maxThrustTorque);
@@ -80,6 +86,7 @@ namespace BasicDeltaV.Simulation
 			log.buf.AppendFormat("deltaV        : {0:g6}\n", this.deltaV);
 			log.buf.AppendFormat("totalDeltaV   : {0:g6}\n", this.totalDeltaV);
 			log.buf.AppendFormat("invTotDeltaV  : {0:g6}\n", this.inverseTotalDeltaV);
+            log.buf.AppendFormat("stageDeltaV   : {0:g6}\n", this.stageStartDeltaV);
 
 			log.Flush();
 		}
