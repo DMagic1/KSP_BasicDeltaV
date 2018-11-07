@@ -39,7 +39,13 @@ namespace BasicDeltaV
         [Persistent]
         public bool DisplayActiveFlight = true;
         [Persistent]
-        public bool MoreBasicMode = true;
+        public bool MoreBasicMode = false;
+        [Persistent]
+        public bool ShowDVText = false;
+        [Persistent]
+        public bool BasicCurrentOnly = false;
+        [Persistent]
+        public bool BasicShowStandard = false;
         [Persistent]
         public bool ShowDeltaV = true;
         [Persistent]
@@ -62,6 +68,8 @@ namespace BasicDeltaV
 		public bool StageScaleEditorOnly = true;
         [Persistent]
         public string CelestialBody = "Kerbin";
+        [Persistent]
+        public bool VectoredThrust = true;
         [Persistent]
 		public float PanelAlpha = 0.5f;
 		[Persistent]

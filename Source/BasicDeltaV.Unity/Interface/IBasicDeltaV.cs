@@ -42,7 +42,13 @@ namespace BasicDeltaV.Unity.Interface
 
         bool MoreBasicMode { get; set; }
 
-		bool ShowDeltaV { get; set; }
+        bool ShowBasicDVText { get; set; }
+
+        bool BasicShowCurrent { get; set; }
+
+        bool BasicShowStandard { get; set; }
+
+        bool ShowDeltaV { get; set; }
 
 		bool ShowTWR { get; set; }
 
@@ -60,7 +66,9 @@ namespace BasicDeltaV.Unity.Interface
 
 		bool Atmosphere { get; set; }
 
-		bool ShowAtmosphere { get; }
+        bool VectoredThrust { get; set; }
+
+        bool ShowAtmosphere { get; }
 
 		bool InMenu { get; set; }
 
