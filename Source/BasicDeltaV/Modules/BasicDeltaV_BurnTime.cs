@@ -31,7 +31,7 @@ namespace BasicDeltaV.Modules
     public class BasicDeltaV_BurnTime : BasicDeltaV_Module
     {
 		private static int[] times = new int[5];
-		private static string[] units = new string[5] { "s", "m", "h", "d", "y" };
+		private static readonly string[] units = new string[5] { "s", "m", "h", "d", "y" };
 
         public BasicDeltaV_BurnTime(string t, BasicDeltaV_StagePanel p)
 			: base (t, p)
@@ -40,19 +40,8 @@ namespace BasicDeltaV.Modules
             _fixedOrder = 2;
 			_simple = false;
 			_dvModule = true;
-            _showInBasic = true;
         }
-
-        protected override string fieldUpdate()
-		{
-			if (_panel.Stage == null)
-				return "---";
-
-			double time = _panel.Stage.time;
-
-            return result(time, 3);
-        }
-
+        
         protected override void fieldUpdate(StringBuilder sb)
         {
             if (_panel.Stage == null)
@@ -69,57 +58,14 @@ namespace BasicDeltaV.Modules
                 return;
 
             sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.LabelColorHex);
-            sb.Append(ModuleTitle);
+            sb.Append(_title);
             sb.Append(COLOR_CLOSE_TAG);
 
             sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.ReadoutColorHex);
             result(sb, time, 3);
             sb.Append(COLOR_CLOSE_TAG);
         }
-
-        private string result(double time, int values)
-		{
-			if (time == 0)
-				return "0s";
-
-			if (double.IsNaN(time) || double.IsInfinity(time))
-				return "---";
-
-			if (time >= int.MaxValue)
-				return "---";
-			else if (time <= int.MinValue)
-				return "---";
-
-			SetTimes(time);
-
-			StringBuilder sb = StringBuilderCache.Acquire();
-
-			for (int i = times.Length -1; i >= 0; i--)
-			{
-				int t = times[i];
-
-				if (t == 0)
-				{
-					if (i < times.Length - 1 && times[i + 1] == 0)
-						continue;
-					else if (i >= times.Length - 1)
-						continue;
-				}
-
-				if (values <= 0)
-					continue;
-
-				sb.AppendFormat("{0}{1}", Math.Abs(t), units[i]);
-
-				if (values > 1 && i > 0)
-					sb.Append(",");
-
-				values--;
-			}
-
-			return sb.ToStringAndRelease();
-		}
-
+        
         private void result(StringBuilder sb, double time, int values)
         {
             if (time == 0)
@@ -145,7 +91,7 @@ namespace BasicDeltaV.Modules
                 if (values <= 0)
                     continue;
 
-                sb.AppendFormat("{0}{1}", Math.Abs(t), units[i]);
+                sb.AppendFormat("{0}{1}", Math.Abs(t).ToString(), units[i]);
 
                 if (values > 1 && i > 0)
                     sb.Append(",");

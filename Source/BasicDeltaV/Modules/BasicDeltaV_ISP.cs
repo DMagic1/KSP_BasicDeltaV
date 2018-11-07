@@ -36,41 +36,25 @@ namespace BasicDeltaV.Modules
 			_fixedOrder = 2;
 			_simple = false;
 			_dvModule = true;
-            _showInBasic = true;
         }
-
-        protected override string fieldUpdate()
-		{
-			if (_panel.Stage == null)
-				return "---";
-
-			double isp = _panel.Stage.isp;
-
-			return result(isp);
-        }
-
+        
         protected override void fieldUpdate(StringBuilder sb)
         {
             if (_panel.Stage == null)
                 return;
 
             sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.LabelColorHex);
-            sb.Append(ModuleTitle);
+            sb.Append(_title);
             sb.Append(COLOR_CLOSE_TAG);
             
             sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.ReadoutColorHex);
             result(sb, _panel.Stage.isp);
             sb.Append(COLOR_CLOSE_TAG);
         }
-
-        private string result(double isp)
-        {
-            return string.Format("{0:N1}s", isp);
-        }
-
+        
         private void result(StringBuilder sb, double isp)
         {
-            sb.AppendFormat("{0:N1}s", isp);
+            sb.AppendFormat("{0}s", isp.ToString("N1"));
         }
     }
 }

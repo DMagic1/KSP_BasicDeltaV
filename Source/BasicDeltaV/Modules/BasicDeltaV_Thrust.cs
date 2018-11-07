@@ -39,27 +39,15 @@ namespace BasicDeltaV.Modules
 			_fixedOrder = 3;
 			_simple = true;
 			_dvModule = true;
-            _showInBasic = true;
         }
-
-        protected override string fieldUpdate()
-		{
-			if (_panel.Stage == null)
-				return "---";
-            
-            if (_activeStage)
-                return activeResult(_panel.Stage.actualThrust, _panel.Stage.thrust);
-            else
-                return result(_panel.Stage.thrust);
-        }
-
+        
         protected override void fieldUpdate(StringBuilder sb)
         {
             if (_panel.Stage == null)
                 return;
 
             sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.LabelColorHex);
-            sb.Append(ModuleTitle);
+            sb.Append(_title);
             sb.Append(COLOR_CLOSE_TAG);
 
             sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.ReadoutColorHex);
@@ -71,69 +59,37 @@ namespace BasicDeltaV.Modules
 
             sb.Append(COLOR_CLOSE_TAG);
         }
-
-        private string result(double thrust)
-        {
-			if (thrust < 10)
-				return string.Format("{0:N3}kN", thrust);
-			else if (thrust < 100)
-				return string.Format("{0:N2}kN", thrust);
-			else if (thrust < 1000)
-				return string.Format("{0:N1}kN", thrust);
-			else if (thrust < 10000)
-				return string.Format("{0:N0}kN", thrust);
-			else if (thrust < 100000)
-				return string.Format("{0:N2}MN", thrust / 1000);
-			else
-				return string.Format("{0:N1}MN", thrust / 1000);
-        }
-
-        private string activeResult(double thrust, double max)
-        {
-            if (thrust == 0)
-                return string.Format("0kN({0:N0})", max);
-            else if (thrust < 10)
-                return string.Format("{0:N2}kN({1:N0})", thrust, max);
-            else if (thrust < 100)
-                return string.Format("{0:N1}kN({1:N0})", thrust, max);
-            else if (thrust < 10000)
-                return string.Format("{0:N0}kN({1:N0})", thrust, max);
-            else if (thrust < 100000)
-                return string.Format("{0:N1}MN({1:N0})", thrust / 1000, max / 1000);
-            else
-                return string.Format("{0:N0}MN({1:N0})", thrust / 1000, max / 1000);
-        }
-
+        
         private void result(StringBuilder sb, double thrust)
         {
             if (thrust < 10)
-                sb.AppendFormat("{0:N3}kN", thrust);
+                sb.AppendFormat("{0}kN", thrust.ToString("N3"));
             else if (thrust < 100)
-                sb.AppendFormat("{0:N2}kN", thrust);
+                sb.AppendFormat("{0}kN", thrust.ToString("N2"));
             else if (thrust < 1000)
-                sb.AppendFormat("{0:N1}kN", thrust);
+                sb.AppendFormat("{0}kN", thrust.ToString("N1"));
             else if (thrust < 10000)
-                sb.AppendFormat("{0:N0}kN", thrust);
+                sb.AppendFormat("{0}kN", thrust.ToString("N0"));
             else if (thrust < 100000)
-                sb.AppendFormat("{0:N2}MN", thrust / 1000);
+                sb.AppendFormat("{0}MN", (thrust / 1000).ToString("N2"));
             else
-                sb.AppendFormat("{0:N1}MN", thrust / 1000);
+                sb.AppendFormat("{0}MN", (thrust / 1000).ToString("N1"));
         }
 
         private void activeResult(StringBuilder sb, double thrust, double max)
         {
             if (thrust == 0)
-                sb.AppendFormat("0kN({0:N0})", max);
+                sb.AppendFormat("0kN({0})", max.ToString("N0"));
             else if (thrust < 10)
-                sb.AppendFormat("{0:N2}kN({1:N0})", thrust, max);
+                sb.AppendFormat("{0}kN({1})", thrust.ToString("N2"), max.ToString("N0"));
             else if (thrust < 100)
-                sb.AppendFormat("{0:N1}kN({1:N0})", thrust, max);
+                sb.AppendFormat("{0}kN({1})", thrust.ToString("N1"), max.ToString("N0"));
             else if (thrust < 10000)
-                sb.AppendFormat("{0:N0}kN({1:N0})", thrust, max);
+                sb.AppendFormat("{0}kN({1})", thrust.ToString("N0"), max.ToString("N0"));
             else if (thrust < 100000)
-                sb.AppendFormat("{0:N1}MN({1:N0})", thrust / 1000, max / 1000);
+                sb.AppendFormat("{0}MN({1})", (thrust / 1000).ToString("N1"), (max / 1000).ToString("N0"));
             else
-                sb.AppendFormat("{0:N0}MN({1:N0})", thrust / 1000, max / 1000);
+                sb.AppendFormat("{0}MN({1})", (thrust / 1000).ToString("N0"), (max / 1000).ToString("N0"));
         }
     }
 }

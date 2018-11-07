@@ -39,26 +39,8 @@ namespace BasicDeltaV.Modules
 			_fixedOrder = 1;
 			_simple = true;
 			_dvModule = true;
-            _showInBasic = false;
         }
-
-        protected override string fieldUpdate()
-        {
-			if (_panel.Stage == null)
-				return "---";
-
-			double twr = _panel.Stage.thrustToWeight;
-			double maxTWR = _panel.Stage.maxThrustToWeight;
-
-            if (_activeStage)
-            {
-                twr = _panel.Stage.actualThrustToWeight;
-                maxTWR = _panel.Stage.thrustToWeight;
-            }
-
-			return result(twr, maxTWR);
-        }
-
+        
         protected override void fieldUpdate(StringBuilder sb)
         {
             if (_panel.Stage == null)
@@ -74,51 +56,31 @@ namespace BasicDeltaV.Modules
             }
 
             sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.LabelColorHex);
-            sb.Append(ModuleTitle);
+            sb.Append(_title);
             sb.Append(COLOR_CLOSE_TAG);
 
             sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.ReadoutColorHex);
             result(sb, twr, maxTWR);
             sb.Append(COLOR_CLOSE_TAG);
         }
-
-        private string result(double twr, double max)
-        {
-            if (twr == 0)
-            {
-                if (max < 10)
-                    return string.Format("0({0:F2})", max);
-                else if (max < 100)
-                    return string.Format("0({0:F1})", max);
-                else
-                    return string.Format("0({0:F0})", max);
-            }
-
-            if (twr < 10 || max < 10)
-                return string.Format("{0:F2}({1:F2})", twr, max);
-            else if (twr < 100 || max < 100)
-                return string.Format("{0:F1}({1:F1})", twr, max);
-
-            return string.Format("{0:F0}({1:F0})", twr, max);
-        }
-
+        
         private void result(StringBuilder sb, double twr, double max)
         {
             if (twr == 0)
             {
                 if (max < 10)
-                    sb.AppendFormat("0({0:F2})", max);
+                    sb.AppendFormat("0({0})", max.ToString("F2"));
                 else if (max < 100)
-                    sb.AppendFormat("0({0:F1})", max);
+                    sb.AppendFormat("0({0})", max.ToString("F1"));
                 else
-                    sb.AppendFormat("0({0:F0})", max);
+                    sb.AppendFormat("0({0})", max.ToString("F0"));
             }
             else if (twr < 10 || max < 10)
-                sb.AppendFormat("{0:F2}({1:F2})", twr, max);
+                sb.AppendFormat("{0}({1})", twr.ToString("F2"), max.ToString("F2"));
             else if (twr < 100 || max < 100)
-                sb.AppendFormat("{0:F1}({1:F1})", twr, max);
+                sb.AppendFormat("{0}({1})", twr.ToString("F1"), max.ToString("F1"));
             else
-                sb.AppendFormat("{0:F0}({1:F0})", twr, max);
+                sb.AppendFormat("{0}({1})", twr.ToString("F0"), max.ToString("F0"));
         }
     }
 }

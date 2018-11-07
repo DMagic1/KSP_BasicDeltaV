@@ -1,5 +1,4 @@
 ﻿
-using BasicDeltaV.Simulation;
 using UnityEngine;
 using KSP.UI;
 using KSP.UI.Screens;
@@ -9,44 +8,32 @@ namespace BasicDeltaV
 {
     public class BasicDeltaV_SimpleDeltaVGauge : MonoBehaviour
     {
-        private RectTransform parent;
-        private Stage stage;
-        private int index;
-
         private bool display;
+
+        private BasicDeltaV_StagePanel panel;
 
         private StageIconInfoBox infoBar;
         private TooltipController_Text tooltip;
 
+        private bool showText;
+
         private Tooltip_Text toolText;
-
-        public Stage Stage
+        
+        public void Initialize(StageIconInfoBox iconInfo, bool disp, BasicDeltaV_StagePanel pan)
         {
-            get { return stage; }
-            set { stage = value; }
-        }
+            infoBar = iconInfo;
+            display = disp;
+            panel = pan;
 
-        public int Index
-        {
-            get { return index; }
-            set { index = value; }
+            showText = BasicDeltaV_Settings.Instance.ShowDVText;
+
+            if (!showText)
+                infoBar.SetCaption(string.Format("<color=#{0}> ΔV</color>", BasicDeltaV.TextColor));
+            
+            if (panel.Stage != null)
+                infoBar.SetValue((float)panel.Stage.deltaV, 0, (float)panel.Stage.totalDeltaV);
         }
         
-        public void Initialize(RectTransform rect, int i, StageIconInfoBox iconInfo, bool disp)
-        {
-            parent = rect;
-            index = i;
-
-            display = disp;
-
-            infoBar = iconInfo;
-            
-            stage = BasicDeltaV.Instance.GetStage(i);
-            
-            if (stage != null)
-                infoBar.SetValue((float)stage.deltaV, 0, (float)stage.totalDeltaV);
-        }
-
         private void Awake()
         {
             tooltip = GetComponent<TooltipController_Text>();
@@ -55,17 +42,6 @@ namespace BasicDeltaV
 
         private void Start()
         {
-            //infoBar = Instantiate(BasicDeltaV_Loader.PanelInfoBarPrefab, transform);
-
-            //if (infoBar == null)
-            //    return;
-
-            //Destroy(infoBar.GetComponentInChildren<TextMeshProUGUI>());
-            //Destroy(infoBar.GetComponent<Image>());
-
-            //if (BasicDeltaV_Settings.Instance.MoreBasicMode && display)
-            //    infoBar.Expand();
-
             GameEvents.onTooltipSpawned.Add(TooltipSpawned);
             GameEvents.onTooltipDespawned.Add(TooltipDespawned);
         }
@@ -76,19 +52,27 @@ namespace BasicDeltaV
             GameEvents.onTooltipDespawned.Remove(TooltipDespawned);
         }
 
-        public void Expand(bool isOn, bool disp, Stage st, int i)
+        public void Expand(bool isOn)
         {
-            stage = st;
-            index = i;
-            display = disp;
-
-            if (isOn && display)
+            display = isOn;
+            
+            if (display)
             {
-                if (!infoBar.expanded)
+                if (!infoBar.gameObject.activeSelf)
                     infoBar.Expand();
             }
-            else if (infoBar.expanded)
+            else if (infoBar.gameObject.activeSelf)
                 infoBar.Collapse();
+        }
+
+        public void ToggleText(bool isOn)
+        {
+            showText = isOn;
+
+            if (!showText)
+                infoBar.SetCaption(string.Format("<color=#{0}> ΔV</color>", BasicDeltaV.TextColor));
+            else
+                infoBar.SetCaption(string.Format("<color=#FFFFFFFF> {0}</color>", dvText(panel.Stage.deltaV)));
         }
 
         private void Update()
@@ -96,25 +80,55 @@ namespace BasicDeltaV
             if (!display)
                 return;
 
-            if (stage == null)
+            if (panel.Stage == null)
                 return;
 
-            double dv = stage.deltaV;
-            double totDv = stage.totalDeltaV;
+            double dv = panel.Stage.deltaV;
+            double stageDv = panel.Stage.stageStartDeltaV;
             
             if (infoBar != null)
-                infoBar.SetValue((float)dv, 0, (float)totDv);
+            {
+                infoBar.SetValue((float)dv, 0, (float)stageDv);
+            }
 
             if (toolText != null)
-                toolText.label.text = dvText(dv, totDv);
+            {
+                if (panel.Index == StageManager.LastStage && !BasicDeltaV_Settings.Instance.BasicCurrentOnly)
+                    toolText.label.text = dvText(dv, stageDv);
+                else
+                    toolText.label.text = dvText(dv, stageDv, BasicDeltaV.Instance.LastStage.totalStartDeltaV);
+            }
+
+            if (showText)
+            {
+                infoBar.SetCaption(string.Format("<color=#FFFFFFFF> {0}</color>", dvText(panel.Stage.deltaV)));
+            }
         }
 
+        private string dvText(double dv)
+        {
+            if (dv >= 10000f)
+                return string.Format("ΔV: {0} km/s", (dv / 1000).ToString("N2"));
+
+            return string.Format("ΔV: {0} m/s", dv.ToString("N0"));
+        }
+        
         private string dvText(double dv, double tot)
         {
             if (dv >= 10000f || tot >= 10000f)
-                return string.Format("{0:N2}/{1:N2}km/s", dv / 1000, tot / 1000);
+                return string.Format("{0} / {1}km/s", (dv / 1000).ToString("N2"), (tot / 1000).ToString("N2"));
 
-            return string.Format("{0:N0}/{1:N0}m/s", dv, tot);
+            return string.Format("{0} / {1}m/s", dv.ToString("N0"), tot.ToString("N0"));
+        }
+
+        private string dvText(double dv, double stagedV, double tot)
+        {
+            if (dv >= 10000f || tot >= 10000f || stagedV >= 10000f)
+                return string.Format("Stage ΔV: {0} / {1} km/s\nVessel ΔV: {2} km/s"
+                    , (dv / 1000).ToString("N2"), (stagedV / 1000).ToString("N2"), (tot / 1000).ToString("N2"));
+
+            return string.Format("Stage ΔV: {0} / {1}m/s\nVessel ΔV: {2} m/s"
+                , dv.ToString("N0"), stagedV.ToString("N0"), tot.ToString("N0"));
         }
 
         private void TooltipSpawned(ITooltipController controller, Tooltip tool)
