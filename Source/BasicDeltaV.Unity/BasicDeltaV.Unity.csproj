@@ -49,8 +49,6 @@
     <Compile Include="StateToggle.cs" />
     <Compile Include="Unity\BasicDeltaV_AppWindow.cs" />
     <Compile Include="Unity\BasicDeltaV_BodyElement.cs" />
-    <Compile Include="Unity\BasicDeltaV_Module.cs" />
-    <Compile Include="Unity\BasicDeltaV_Panel.cs" />
     <Compile Include="Interface\IBasicDeltaV.cs" />
     <Compile Include="TextHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
