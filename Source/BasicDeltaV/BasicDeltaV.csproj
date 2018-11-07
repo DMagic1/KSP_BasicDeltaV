@@ -48,16 +48,16 @@
   <ItemGroup>
     <Compile Include="BasicDeltaV.cs" />
     <Compile Include="BasicDeltaV_AppLauncher.cs" />
-    <Compile Include="BasicDeltaV_GameParameters.cs" />
+    <Compile Include="Utilities\BasicDeltaV_GameParameters.cs" />
     <Compile Include="BasicDeltaV_Loader.cs" />
     <Compile Include="BasicDeltaV_PanelManager.cs" />
     <Compile Include="BasicDeltaV_Settings.cs" />
     <Compile Include="BasicDeltaV_SimpleDeltaVGauge.cs" />
     <Compile Include="BasicDeltaV_StagePanel.cs" />
-    <Compile Include="BasicDeltaV_StageGroupHandler.cs" />
-    <Compile Include="BasicDeltaV_TextMeshPro.cs" />
+    <Compile Include="Utilities\BasicDeltaV_StageGroupHandler.cs" />
+    <Compile Include="Utilities\BasicDeltaV_TextMeshPro.cs" />
     <Compile Include="BasicDeltaV_TWRGauge.cs" />
-    <Compile Include="BasicDeltaV_UIAppHandler.cs" />
+    <Compile Include="Utilities\BasicDeltaV_UIAppHandler.cs" />
     <Compile Include="Extensions\PartExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Helpers\Averager.cs" />
