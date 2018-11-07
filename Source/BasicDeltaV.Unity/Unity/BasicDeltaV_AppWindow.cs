@@ -42,8 +42,18 @@ namespace BasicDeltaV.Unity.Unity
         private TextHandler m_VersionText = null;
 		[SerializeField]
 		private StateToggle m_DisplayToggle = null;
-		[SerializeField]
+        [SerializeField]
+        private StateToggle m_MoreBasicToggle = null;
+        [SerializeField]
+        private StateToggle m_ShowDVTextToggle = null;
+        [SerializeField]
+        private StateToggle m_BasicCurrentToggle = null;
+        [SerializeField]
+        private StateToggle m_BasicStandardToggle = null;
+        [SerializeField]
 		private StateToggle m_CurrentStage = null;
+        [SerializeField]
+        private StateToggle m_VectorThrustToggle = null;
         [SerializeField]
         private Toggle m_BodyToggle = null;
         [SerializeField]
@@ -76,8 +86,6 @@ namespace BasicDeltaV.Unity.Unity
         private GameObject m_ModuleBar = null;
         [SerializeField]
 		private StateToggle m_DeltaVToggle = null;
-		//[SerializeField]
-		//private StateToggle m_VesselDeltaVToggle = null;
         [SerializeField]
 		private StateToggle m_TWRToggle = null;
         [SerializeField]
@@ -242,13 +250,44 @@ namespace BasicDeltaV.Unity.Unity
 			if (m_DisplayToggle != null)
 				m_DisplayToggle.isOn = basic.DisplayActive;
 
-			if (m_CurrentStage != null)
+            if (m_MoreBasicToggle != null)
+            {
+                m_MoreBasicToggle.isOn = basic.MoreBasicMode;
+
+                m_MoreBasicToggle.gameObject.SetActive(basic.ShowCurrentStageBar);
+            }
+
+            if (m_ShowDVTextToggle != null)
+            {
+                m_ShowDVTextToggle.isOn = basic.ShowBasicDVText;
+
+                m_ShowDVTextToggle.gameObject.SetActive(basic.ShowCurrentStageBar && basic.MoreBasicMode);
+            }
+            
+            if (m_BasicCurrentToggle != null)
+            {
+                m_BasicCurrentToggle.isOn = basic.BasicShowCurrent;
+
+                m_BasicCurrentToggle.gameObject.SetActive(basic.ShowCurrentStageBar && basic.MoreBasicMode);
+            }
+
+            if (m_BasicStandardToggle != null)
+            {
+                m_BasicStandardToggle.isOn = basic.BasicShowStandard;
+
+                m_BasicStandardToggle.gameObject.SetActive(basic.ShowCurrentStageBar && basic.MoreBasicMode);
+            }
+
+            if (m_CurrentStage != null)
 			{
 				m_CurrentStage.isOn = basic.CurrentStageOnly;
 
 				m_CurrentStage.gameObject.SetActive(basic.ShowCurrentStageBar);
-			}
+            }
 
+            if (m_VectorThrustToggle != null)
+                m_VectorThrustToggle.isOn = basic.VectoredThrust;
+            
             if (m_BodyTitle != null)
                 m_BodyTitle.OnTextUpdate.Invoke(basic.CurrentBody);
 
@@ -295,10 +334,18 @@ namespace BasicDeltaV.Unity.Unity
                 m_AtmosphereControlBar.SetActive(basic.ShowAtmosphere);
 
             if (m_DeltaVToggle != null)
+            {
                 m_DeltaVToggle.isOn = basic.ShowDeltaV;
 
+                m_DeltaVToggle.gameObject.SetActive(!basic.MoreBasicMode);
+            }
+
             if (m_TWRToggle != null)
+            {
                 m_TWRToggle.isOn = basic.ShowTWR;
+
+                m_TWRToggle.gameObject.SetActive(!basic.MoreBasicMode);
+            }
 
             if (m_BurnTimeToggle != null)
                 m_BurnTimeToggle.isOn = basic.ShowBurnTime;
@@ -391,6 +438,12 @@ namespace BasicDeltaV.Unity.Unity
 			if (m_DisplayToggle != null)
 				m_DisplayToggle.isOn = isOn;
 		}
+
+        public void SetAtmosphereToggle(bool isOn)
+        {
+            if (m_AtmosphereToggle != null)
+                m_AtmosphereToggle.isOn = isOn;
+        }
 
 		public void SetStagingScale(float scale)
 		{
@@ -593,7 +646,15 @@ namespace BasicDeltaV.Unity.Unity
 			basicInterface.Alpha = a;
         }
 
-		public void ToggleCurrentStage(bool isOn)
+        public void ToggleVectoredThrust(bool isOn)
+        {
+            if (basicInterface == null || !loaded)
+                return;
+
+            basicInterface.VectoredThrust = isOn;
+        }
+
+        public void ToggleCurrentStage(bool isOn)
 		{
 			if (basicInterface == null || !loaded)
 				return;
@@ -601,7 +662,49 @@ namespace BasicDeltaV.Unity.Unity
 			basicInterface.CurrentStageOnly = isOn;
 		}
 
-		public void StageScaleEditorOnly(bool isOn)
+        public void ToggleMoreBasic(bool isOn)
+        {
+            if (basicInterface == null || !loaded)
+                return;
+
+            basicInterface.MoreBasicMode = isOn;
+            
+            m_DeltaVToggle.gameObject.SetActive(!isOn);
+            
+            m_TWRToggle.gameObject.SetActive(!isOn);
+
+            m_ShowDVTextToggle.gameObject.SetActive(isOn);
+
+            m_BasicCurrentToggle.gameObject.SetActive(isOn);
+
+            m_BasicStandardToggle.gameObject.SetActive(isOn);
+        }
+
+        public void ToggleShowDVText(bool isOn)
+        {
+            if (basicInterface == null || !loaded)
+                return;
+
+            basicInterface.ShowBasicDVText = isOn;
+        }
+
+        public void ToggleBasicCurrent(bool isOn)
+        {
+            if (basicInterface == null || !loaded)
+                return;
+
+            basicInterface.BasicShowCurrent = isOn;
+        }
+
+        public void ToggleBasicStandard(bool isOn)
+        {
+            if (basicInterface == null || !loaded)
+                return;
+
+            basicInterface.BasicShowStandard = isOn;
+        }
+
+        public void StageScaleEditorOnly(bool isOn)
 		{
 			if (basicInterface == null || !loaded)
 				return;

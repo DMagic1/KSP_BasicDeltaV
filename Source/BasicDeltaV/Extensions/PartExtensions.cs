@@ -111,5 +111,28 @@ namespace BasicDeltaV
             return false;
         }
 
+        public static bool IsSepratron(this Part part)
+        {
+            for (int i = 0; i < part.Modules.Count; i++)
+            {
+                if (part.Modules[i] is ModuleEngines)
+                {
+                    if ((part.Modules[i] as ModuleEngines).throttleLocked)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool ContainedPart(this Part part, List<Part> chain)
+        {
+            for (int i = 0; i < chain.Count; i++)
+            {
+                if (chain[i] == part)
+                    return true;
+            }
+
+            return false;
+        }
     }
 }

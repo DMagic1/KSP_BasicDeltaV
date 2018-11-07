@@ -23,6 +23,8 @@
  */
 #endregion
 
+using System.Text;
+
 namespace BasicDeltaV.Modules
 {
     public class BasicDeltaV_TWR : BasicDeltaV_Module
@@ -38,14 +40,14 @@ namespace BasicDeltaV.Modules
 			_simple = true;
 			_dvModule = true;
         }
-
-        protected override string fieldUpdate()
+        
+        protected override void fieldUpdate(StringBuilder sb)
         {
-			if (_panel.Stage == null)
-				return "---";
+            if (_panel.Stage == null)
+                return;
 
-			double twr = _panel.Stage.thrustToWeight;
-			double maxTWR = _panel.Stage.maxThrustToWeight;
+            double twr = _panel.Stage.thrustToWeight;
+            double maxTWR = _panel.Stage.maxThrustToWeight;
 
             if (_activeStage)
             {
@@ -53,27 +55,32 @@ namespace BasicDeltaV.Modules
                 maxTWR = _panel.Stage.thrustToWeight;
             }
 
-			return result(twr, maxTWR);
-        }
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.LabelColorHex);
+            sb.Append(_title);
+            sb.Append(COLOR_CLOSE_TAG);
 
-        private string result(double twr, double max)
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.ReadoutColorHex);
+            result(sb, twr, maxTWR);
+            sb.Append(COLOR_CLOSE_TAG);
+        }
+        
+        private void result(StringBuilder sb, double twr, double max)
         {
             if (twr == 0)
             {
                 if (max < 10)
-                    return string.Format("0({0:F2})", max);
+                    sb.AppendFormat("0({0})", max.ToString("F2"));
                 else if (max < 100)
-                    return string.Format("0({0:F1})", max);
+                    sb.AppendFormat("0({0})", max.ToString("F1"));
                 else
-                    return string.Format("0({0:F0})", max);
+                    sb.AppendFormat("0({0})", max.ToString("F0"));
             }
-
-            if (twr < 10 || max < 10)
-                return string.Format("{0:F2}({1:F2})", twr, max);
+            else if (twr < 10 || max < 10)
+                sb.AppendFormat("{0}({1})", twr.ToString("F2"), max.ToString("F2"));
             else if (twr < 100 || max < 100)
-                return string.Format("{0:F1}({1:F1})", twr, max);
-
-            return string.Format("{0:F0}({1:F0})", twr, max);
+                sb.AppendFormat("{0}({1})", twr.ToString("F1"), max.ToString("F1"));
+            else
+                sb.AppendFormat("{0}({1})", twr.ToString("F0"), max.ToString("F0"));
         }
     }
 }

@@ -22,23 +22,22 @@
  * 
  */
 #endregion
+using System.Text;
 
 namespace BasicDeltaV.Unity.Interface
 {
     public interface IBasicModule
     {
-        string ModuleTitle { get; }
-
-        string ModuleText { get; }
-
         bool SmallSize { get; }
 
 		bool DVModule { get; }
+        
+        bool LineBreak { get; set; }
 
         int Order { get; set; }
 
 		int FixedOrder { get; }
         
-        void Update();
+        void Update(StringBuilder sb);
     }
 }

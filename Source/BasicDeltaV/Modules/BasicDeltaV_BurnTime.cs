@@ -31,7 +31,7 @@ namespace BasicDeltaV.Modules
     public class BasicDeltaV_BurnTime : BasicDeltaV_Module
     {
 		private static int[] times = new int[5];
-		private static string[] units = new string[5] { "s", "m", "h", "d", "y" };
+		private static readonly string[] units = new string[5] { "s", "m", "h", "d", "y" };
 
         public BasicDeltaV_BurnTime(string t, BasicDeltaV_StagePanel p)
 			: base (t, p)
@@ -41,59 +41,64 @@ namespace BasicDeltaV.Modules
 			_simple = false;
 			_dvModule = true;
         }
+        
+        protected override void fieldUpdate(StringBuilder sb)
+        {
+            if (_panel.Stage == null)
+                return;
 
-        protected override string fieldUpdate()
-		{
-			if (_panel.Stage == null)
-				return "---";
+            double time = _panel.Stage.time;
+            
+            if (double.IsNaN(time) || double.IsInfinity(time))
+                return;
 
-			double time = _panel.Stage.time;
+            if (time >= int.MaxValue)
+                return;
+            else if (time <= int.MinValue)
+                return;
 
-            return result(time, 3);
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.LabelColorHex);
+            sb.Append(_title);
+            sb.Append(COLOR_CLOSE_TAG);
+
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.ReadoutColorHex);
+            result(sb, time, 3);
+            sb.Append(COLOR_CLOSE_TAG);
         }
+        
+        private void result(StringBuilder sb, double time, int values)
+        {
+            if (time == 0)
+            {
+                sb.Append("0s");
+                return;
+            }
 
-		private string result(double time, int values)
-		{
-			if (time == 0)
-				return "0s";
+            SetTimes(time);
 
-			if (double.IsNaN(time) || double.IsInfinity(time))
-				return "---";
+            for (int i = times.Length - 1; i >= 0; i--)
+            {
+                int t = times[i];
 
-			if (time >= int.MaxValue)
-				return "---";
-			else if (time <= int.MinValue)
-				return "---";
+                if (t == 0)
+                {
+                    if (i < times.Length - 1 && times[i + 1] == 0)
+                        continue;
+                    else if (i >= times.Length - 1)
+                        continue;
+                }
 
-			SetTimes(time);
+                if (values <= 0)
+                    continue;
 
-			StringBuilder sb = StringBuilderCache.Acquire();
+                sb.AppendFormat("{0}{1}", Math.Abs(t).ToString(), units[i]);
 
-			for (int i = times.Length -1; i >= 0; i--)
-			{
-				int t = times[i];
+                if (values > 1 && i > 0)
+                    sb.Append(",");
 
-				if (t == 0)
-				{
-					if (i < times.Length - 1 && times[i + 1] == 0)
-						continue;
-					else if (i >= times.Length - 1)
-						continue;
-				}
-
-				if (values <= 0)
-					continue;
-
-				sb.AppendFormat("{0}{1}", Math.Abs(t), units[i]);
-
-				if (values > 1 && i > 0)
-					sb.Append(",");
-
-				values--;
-			}
-
-			return sb.ToStringAndRelease();
-		}
+                values--;
+            }
+        }
 
 		private void SetTimes(double d)
 		{

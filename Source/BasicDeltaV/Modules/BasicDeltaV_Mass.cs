@@ -23,6 +23,8 @@
  */
 #endregion
 
+using System.Text;
+
 namespace BasicDeltaV.Modules
 {
     public class BasicDeltaV_Mass : BasicDeltaV_Module
@@ -35,24 +37,30 @@ namespace BasicDeltaV.Modules
 			_simple = true;
 			_dvModule = false;
         }
-
-        protected override string fieldUpdate()
-		{
-			if (_panel.Stage == null)
-				return "---";
-
-			double mass = _panel.Stage.mass;
-			double total = _panel.Stage.totalMass;
-
-			return result(mass, total);
-        }
-
-        private string result(double mass, double tot)
+        
+        protected override void fieldUpdate(StringBuilder sb)
         {
-			if (mass >= 100f || tot >= 100f)
-				return string.Format("{0:N2}/{1:N2}t", mass, tot);
+            if (_panel.Stage == null)
+                return;
 
-			return string.Format("{0:N0}/{1:N0}kg", mass * 1000, tot * 1000);
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.LabelColorHex);
+            sb.Append(_title);
+            sb.Append(COLOR_CLOSE_TAG);
+
+            double mass = _panel.Stage.mass;
+            double total = _panel.Stage.totalMass;
+
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.ReadoutColorHex);
+            result(sb, mass, total);
+            sb.Append(COLOR_CLOSE_TAG);
+        }
+        
+        private void result(StringBuilder sb, double mass, double tot)
+        {
+            if (mass >= 100f || tot >= 100f)
+                sb.AppendFormat("{0}/{1}t", mass.ToString("N2"), tot.ToString("N2"));
+            else
+                sb.AppendFormat("{0}/{1}kg", (mass * 1000).ToString("N0"), (tot * 1000).ToString("N0"));
         }
     }
 }

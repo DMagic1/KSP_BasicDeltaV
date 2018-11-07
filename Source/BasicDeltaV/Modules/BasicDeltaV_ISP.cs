@@ -23,6 +23,8 @@
  */
 #endregion
 
+using System.Text;
+
 namespace BasicDeltaV.Modules
 {
     public class BasicDeltaV_ISP : BasicDeltaV_Module
@@ -35,20 +37,24 @@ namespace BasicDeltaV.Modules
 			_simple = false;
 			_dvModule = true;
         }
-
-        protected override string fieldUpdate()
-		{
-			if (_panel.Stage == null)
-				return "---";
-
-			double isp = _panel.Stage.isp;
-
-			return result(isp);
-        }
-
-        private string result(double isp)
+        
+        protected override void fieldUpdate(StringBuilder sb)
         {
-            return string.Format("{0:N1}s", isp);
+            if (_panel.Stage == null)
+                return;
+
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.LabelColorHex);
+            sb.Append(_title);
+            sb.Append(COLOR_CLOSE_TAG);
+            
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.ReadoutColorHex);
+            result(sb, _panel.Stage.isp);
+            sb.Append(COLOR_CLOSE_TAG);
+        }
+        
+        private void result(StringBuilder sb, double isp)
+        {
+            sb.AppendFormat("{0}s", isp.ToString("N1"));
         }
     }
 }

@@ -23,6 +23,9 @@
  */
 #endregion
 
+using System.Text;
+using BasicDeltaV.Simulation;
+
 namespace BasicDeltaV.Modules
 {
     public class BasicDeltaV_DeltaV : BasicDeltaV_Module
@@ -35,30 +38,44 @@ namespace BasicDeltaV.Modules
 			_simple = false;
 			_dvModule = false;
         }
-
-        protected override string fieldUpdate()
-		{
-			if (_panel.Stage == null)
-				return "---";
-
-			double dv = _panel.Stage.deltaV;
-
-			double total = 0;
-
-			if (BasicDeltaV_Settings.Instance.ShowCurrentStageOnly && HighLogic.LoadedSceneIsFlight)
-				total = _panel.Stage.totalDeltaV;
-			else
-				total = _panel.Stage.inverseTotalDeltaV;
-
-			return result(dv, total);
-        }
-
-        private string result(double dv, double tot)
+        
+        protected override void fieldUpdate(StringBuilder sb)
         {
-			if (dv >= 10000f || tot >= 10000f)
-				return string.Format("{0:N2}/{1:N2}km/s", dv / 1000, tot / 1000);
+            if (_panel.Stage == null)
+                return;
 
-            return string.Format("{0:N0}/{1:N0}m/s", dv, tot);
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.LabelColorHex);
+            sb.Append(_title);
+            sb.Append(COLOR_CLOSE_TAG);
+
+            double dv = _panel.Stage.deltaV;
+
+            double total = _panel.Stage.inverseTotalDeltaV;
+
+            if (HighLogic.LoadedSceneIsFlight)
+            {
+                if (_panel.CurrentStage)
+                {
+                    if (BasicDeltaV_Settings.Instance.ShowCurrentStageOnly)
+                        total = BasicDeltaV.Instance.LastStage.totalDeltaV;
+                    else
+                        total = _panel.Stage.stageStartDeltaV;
+                }
+                else
+                    total = BasicDeltaV.Instance.LastStage.totalDeltaV;
+            }
+
+            sb.AppendFormat(COLOR_OPEN_TAG, BasicDeltaV_Settings.ReadoutColorHex);
+            result(sb, dv, total);
+            sb.Append(COLOR_CLOSE_TAG);
+        }
+        
+        private void result(StringBuilder sb, double dv, double tot)
+        {
+            if (dv >= 10000f || tot >= 10000f)
+                sb.AppendFormat("{0}/{1}km/s", (dv / 1000).ToString("N2"), (tot / 1000).ToString("N2"));
+            else
+                sb.AppendFormat("{0}/{1}m/s", dv.ToString("N0"), tot.ToString("N0"));
         }
     }
 }

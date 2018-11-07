@@ -27,7 +27,7 @@ namespace BasicDeltaV.Simulation
 	public class ResourceContainer
 	{
 		private Dictionary<int, double> resources = new Dictionary<int, double>();
-		private List<int> types = new List<int>();
+        private List<int> types = new List<int>();
 
 		public double this[int type]
 		{

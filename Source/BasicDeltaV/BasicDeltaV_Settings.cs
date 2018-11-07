@@ -39,6 +39,14 @@ namespace BasicDeltaV
         [Persistent]
         public bool DisplayActiveFlight = true;
         [Persistent]
+        public bool MoreBasicMode = false;
+        [Persistent]
+        public bool ShowDVText = false;
+        [Persistent]
+        public bool BasicCurrentOnly = false;
+        [Persistent]
+        public bool BasicShowStandard = false;
+        [Persistent]
         public bool ShowDeltaV = true;
         [Persistent]
         public bool ShowTWR = true;
@@ -60,6 +68,8 @@ namespace BasicDeltaV
 		public bool StageScaleEditorOnly = true;
         [Persistent]
         public string CelestialBody = "Kerbin";
+        [Persistent]
+        public bool VectoredThrust = true;
         [Persistent]
 		public float PanelAlpha = 0.5f;
 		[Persistent]
@@ -85,9 +95,22 @@ namespace BasicDeltaV
         private static bool loaded;
         private static BasicDeltaV_Settings instance;
 
+        private static string _labelColorHex;
+        private static string _readoutColorHex;
+
         public static BasicDeltaV_Settings Instance
         {
             get { return instance; }
+        }
+
+        public static string LabelColorHex
+        {
+            get { return _labelColorHex; }
+        }
+
+        public static string ReadoutColorHex
+        {
+            get { return _readoutColorHex; }
         }
 
         private void Awake()
@@ -156,6 +179,9 @@ namespace BasicDeltaV
                 BasicDeltaV.BasicLogging("Error while loading settings file from [{0}]\n{1}", fullPath, e);
                 b = false;
             }
+
+            _labelColorHex = ColorUtility.ToHtmlStringRGB(LabelColor);
+            _readoutColorHex = ColorUtility.ToHtmlStringRGB(ReadoutColor);
 
             return b;
         }

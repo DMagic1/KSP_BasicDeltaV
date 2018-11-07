@@ -29,6 +29,7 @@ using BasicDeltaV.Unity.Unity;
 using KSP.UI;
 using KSP.UI.Screens;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using System.IO;
 
 namespace BasicDeltaV
@@ -104,6 +105,12 @@ namespace BasicDeltaV
 
 			button.onRightClick = (Callback)Delegate.Combine(button.onRightClick, new Callback(OnRightClick));
 
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                button.toggleButton.onClick.RemoveAllListeners();
+                button.toggleButton.onClick.AddListener(new UnityEngine.Events.UnityAction<PointerEventData, UIRadioButton.State, UIRadioButton.CallType>(OnClick));
+            }
+
 			if (!BasicDeltaV.ReadoutsAvailable)
 				button.Disable();
 
@@ -121,10 +128,14 @@ namespace BasicDeltaV
 
 		public void ToggleButtonState(bool isOn)
 		{
-			if (isOn)
-				button.Enable();
-			else
-				button.Disable();
+            if (isOn)
+                button.Enable();
+            else
+            {
+                Close();
+
+                button.Disable();
+            }
 		}
 
         private void Reposition()
@@ -133,6 +144,38 @@ namespace BasicDeltaV
                 return;
 
             launcher.transform.position = GetAnchor();
+        }
+
+        private void OnClick(PointerEventData data, UIRadioButton.State state, UIRadioButton.CallType callType)
+        {
+            if (data.button == PointerEventData.InputButton.Left)
+            {
+                button.onLeftClick();
+                button.onLeftClickBtn(button.toggleButton);
+            }
+            else if (data.button == PointerEventData.InputButton.Middle)
+            {
+                OnMiddleClick();
+            }
+            else if (GameSettings.MODIFIER_KEY.GetKey(false) && data.button == PointerEventData.InputButton.Right)
+            {
+                OnMiddleClick();
+            }
+            else if (data.button == PointerEventData.InputButton.Right)
+            {
+                button.onRightClick();
+            }
+        }
+
+        private void OnMiddleClick()
+        {
+            if (!BasicDeltaV.Instance.ShowAtmosphere)
+                return;
+
+            BasicDeltaV.Instance.Atmosphere = !BasicDeltaV.Instance.Atmosphere;
+
+            if (launcher != null)
+                launcher.SetAtmosphereToggle(BasicDeltaV.Instance.Atmosphere);
         }
 
 		private void OnRightClick()

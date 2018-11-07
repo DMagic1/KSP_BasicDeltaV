@@ -23,6 +23,7 @@
  */
 #endregion
 
+using System.Text;
 using BasicDeltaV.Unity.Interface;
 using BasicDeltaV.Simulation;
 
@@ -30,10 +31,13 @@ namespace BasicDeltaV.Modules
 {
     public abstract class BasicDeltaV_Module : IBasicModule
     {
-        private string _title;
-        private string _moduleValue;
+        protected const string COLOR_OPEN_TAG = "<color=#{0}>";
+        protected const string COLOR_CLOSE_TAG = "</color>";
+
+        protected string _title;
         protected bool _smallSize;
 		protected bool _dvModule;
+        protected bool _lineBreak;
         protected int _order;
 		protected int _fixedOrder;
 		protected bool _simple;
@@ -45,16 +49,6 @@ namespace BasicDeltaV.Modules
 			_panel = p;
         }
         
-        public string ModuleTitle
-        {
-            get { return _title; }
-        }
-
-        public string ModuleText
-        {
-            get { return _moduleValue; }
-        }
-
         public bool SmallSize
         {
             get { return _smallSize; }
@@ -76,11 +70,17 @@ namespace BasicDeltaV.Modules
 			get { return _fixedOrder; }
 		}
         
-        public void Update()
+        public bool LineBreak
         {
-            _moduleValue = fieldUpdate();
+            get { return _lineBreak; }
+            set { _lineBreak = value; }
         }
-
-        protected abstract string fieldUpdate();
+        
+        public void Update(StringBuilder sb)
+        {
+            fieldUpdate(sb);
+        }
+        
+        protected abstract void fieldUpdate(StringBuilder sb);
     }
 }

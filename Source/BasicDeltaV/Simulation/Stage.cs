@@ -25,18 +25,22 @@ namespace BasicDeltaV.Simulation
 	public class Stage
 	{
 		public double actualThrust = 0.0;
-		public double actualThrustToWeight = 0.0;
+        public double actualSimpleThrust = 0.0;
+        public double actualThrustToWeight = 0.0;
 		public double cost = 0.0;
 		public double deltaV = 0.0;
-		public double inverseTotalDeltaV = 0.0;
+        public double stageStartDeltaV = 0.0;
+        public double totalStartDeltaV = 0.0;
+        public double inverseTotalDeltaV = 0.0;
 		public double isp = 0.0;
 		public double mass = 0.0;
 		public double rcsMass = 0.0;
 		public double maxThrustToWeight = 0.0;
 		public int number = 0;
 		public double thrust = 0.0;
-		public double thrustToWeight = 0.0;
-		public double time = 0.0;
+        public double simpleThrust = 0.0;
+        public double thrustToWeight = 0.0;
+        public double time = 0.0;
 		public double totalCost = 0.0;
 		public double totalDeltaV = 0.0;
 		public double totalMass = 0.0;
@@ -44,11 +48,21 @@ namespace BasicDeltaV.Simulation
 		public int totalPartCount = 0;
 		public int partCount = 0;
 		public double resourceMass = 0.0;
-		public double maxThrustTorque = 0.0;
+        public double resourceFullMass = 0.0;
+        public double stageFullMass = 0.0;
+        public double startMass = 0.0;
+        public double endMass = 0.0;
+        public double maxThrustTorque = 0.0;
 		public double thrustOffsetAngle = 0.0;
 		public float maxMach = 0.0f;
+        public Vector3 thrustVector = new Vector3();
+        public Vector3 actualThrustVector = new Vector3();
+        public double totalExhaustVelocity = 0.0;
+        public double totalActualExhaustVelocity = 0.0;
+        public Vector3 totalVectoredExhaustVelocity = new Vector3();
+        public Vector3 totalVectoredActualExhaustVelocity = new Vector3();
 
-		public void Dump(LogMsg log)
+        public void Dump(LogMsg log)
 		{
 			log.buf.AppendFormat("number        : {0:d}\n", this.number);
 			log.buf.AppendFormat("cost          : {0:g6}\n", this.cost);
@@ -56,11 +70,15 @@ namespace BasicDeltaV.Simulation
 			log.buf.AppendFormat("time          : {0:g6}\n", this.time);
 			log.buf.AppendFormat("totalTime     : {0:g6}\n", this.totalTime);
 			log.buf.AppendFormat("mass          : {0:g6}\n", this.mass);
-			log.buf.AppendFormat("totalMass     : {0:g6}\n", this.totalMass);
+            log.buf.AppendFormat("fullMass      : {0:g6}\n", this.stageFullMass);
+            log.buf.AppendFormat("resourceMass  : {0:g6}\n", this.resourceMass);
+            log.buf.AppendFormat("endMass       : {0:g6}\n", this.endMass);
+            log.buf.AppendFormat("totalMass     : {0:g6}\n", this.totalMass);
 			log.buf.AppendFormat("isp           : {0:g6}\n", this.isp);
 			log.buf.AppendFormat("thrust        : {0:g6}\n", this.thrust);
 			log.buf.AppendFormat("actualThrust  : {0:g6}\n", this.actualThrust);
-			log.buf.AppendFormat("thrustToWeight: {0:g6}\n", this.thrustToWeight);
+            log.buf.AppendFormat("simpleThrust  : {0:g6}\n", this.simpleThrust);
+            log.buf.AppendFormat("thrustToWeight: {0:g6}\n", this.thrustToWeight);
 			log.buf.AppendFormat("maxTWR        : {0:g6}\n", this.maxThrustToWeight);
 			log.buf.AppendFormat("actualTWR     : {0:g6}\n", this.actualThrustToWeight);
 			log.buf.AppendFormat("ThrustTorque  : {0:g6}\n", this.maxThrustTorque);
@@ -68,6 +86,7 @@ namespace BasicDeltaV.Simulation
 			log.buf.AppendFormat("deltaV        : {0:g6}\n", this.deltaV);
 			log.buf.AppendFormat("totalDeltaV   : {0:g6}\n", this.totalDeltaV);
 			log.buf.AppendFormat("invTotDeltaV  : {0:g6}\n", this.inverseTotalDeltaV);
+            log.buf.AppendFormat("stageDeltaV   : {0:g6}\n", this.stageStartDeltaV);
 
 			log.Flush();
 		}

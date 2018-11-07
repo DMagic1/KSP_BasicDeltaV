@@ -27,8 +27,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Linq;
-using BasicDeltaV.Unity.Unity;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -39,7 +37,6 @@ namespace BasicDeltaV
 {
 	public class BasicDeltaV_PanelManager : MonoBehaviour
 	{
-		//private Dictionary<StageGroup, BasicDeltaV_StagePanel> panels = new Dictionary<StageGroup, BasicDeltaV_StagePanel>();
 		private DictionaryValueList<StageGroup, BasicDeltaV_StagePanel> panels = new DictionaryValueList<StageGroup, BasicDeltaV_StagePanel>();
 		private List<ApplicationLauncherButton> buttons = new List<ApplicationLauncherButton>();
 
@@ -123,7 +120,9 @@ namespace BasicDeltaV
 		{
 			bool iconInfo = false;
 
-			if (HighLogic.LoadedSceneIsFlight)
+            StageIconInfoBox dvInfo = null;
+
+            if (HighLogic.LoadedSceneIsFlight)
 			{
 				int checks = 0;
 
@@ -165,18 +164,20 @@ namespace BasicDeltaV
 					iconInfo = true;
 					break;
 				}
+
+                //BasicDeltaV.BasicLogging("Info Box: {0}", BasicDeltaV_Loader.PanelInfoBarPrefab == null ? "Null" : "Valid");
+                                
+                dvInfo = Instantiate(BasicDeltaV_Loader.PanelInfoBarPrefab, group.transform);
+                dvInfo.transform.SetAsFirstSibling();
 			}
 
-			BasicDeltaV_StagePanel panel = new BasicDeltaV_StagePanel(group.RectTransform, group.inverseStageIndex, iconInfo, display);
+			BasicDeltaV_StagePanel panel = new BasicDeltaV_StagePanel(group.RectTransform, group.inverseStageIndex, iconInfo, display, dvInfo);
 
 			panels.Add(group, panel);
 		}
 
 		public void RefreshPanels()
 		{
-			if (!BasicDeltaV.Instance.DisplayActive)
-				return;
-
 			for (int i = panels.Count - 1; i >= 0; i--)
 				panels.At(i).RefreshModules();
 		}
@@ -197,26 +198,30 @@ namespace BasicDeltaV
 			}
 		}
 
+        public void ToggleDVText(bool isOn)
+        {
+            for (int i = panels.Count - 1; i >= 0; i--)
+                panels.At(i).ToggleDVText(isOn);
+        }
+
 		public void UpdatePanels()
 		{
-			var enumerator = panels.Keys.GetEnumerator();
-			
-			while (enumerator.MoveNext())
-			{
-				StageGroup group = enumerator.Current;
+            for (int i = panels.Count - 1; i >= 0; i--)
+            {
+                StageGroup group = panels.KeyAt(i);
 
 				if (group == null)
 					continue;
 
-				BasicDeltaV_StagePanel panel = null;
+				BasicDeltaV_StagePanel panel = panels.At(i);
 
-				if (!panels.TryGetValue(group, out panel))
+				if (panel == null)
 					continue;
 
 				panel.Index = group.inverseStageIndex;
-
+                
 				panel.Stage = BasicDeltaV.Instance.GetStage(panel.Index);
-				
+
 				if (panel.Stage == null)
 				{
 					panel.SetVisible(false);
@@ -235,29 +240,38 @@ namespace BasicDeltaV
 					continue;
 				}
 
-				if (HighLogic.LoadedSceneIsFlight && BasicDeltaV_Settings.Instance.ShowCurrentStageOnly)
-				{
-					int i = StageManager.LastStage;
-
-					if (group.inverseStageIndex != i)
-					{
-						panel.SetVisible(false);
-						continue;
-					}
-					else if (panel.Stage.deltaV <= 0)
-					{
-						panel.ToggleNoDVModules(false);
-					}
-					else
-					{
-						panel.ToggleNoDVModules(true);
-					}
-				}
-				else if (panel.Stage.deltaV <= 0)
-				{
-					panel.SetVisible(false);
-					continue;
-				}
+                if (HighLogic.LoadedSceneIsFlight && BasicDeltaV_Settings.Instance.ShowCurrentStageOnly)
+                {
+                    if (group.inverseStageIndex == StageManager.LastStage)
+                    {
+                        if (panel.Stage.deltaV <= 0)
+                        {
+                            panel.ToggleNoDVModules(true);
+                        }
+                        else
+                        {
+                            panel.ToggleNoDVModules(false);
+                        }
+                    }
+                    //if (group.inverseStageIndex != StageManager.LastStage)
+                    //{
+                    //    panel.SetVisible(false);
+                    //    continue;
+                    //}
+                    //else if (panel.Stage.deltaV <= 0)
+                    //{
+                    //    panel.ToggleNoDVModules(true);
+                    //}
+                    //else
+                    //{
+                    //    panel.ToggleNoDVModules(false);
+                    //}
+                }
+                else if (panel.Stage.deltaV <= 0)
+                {
+                    panel.SetVisible(false);
+                    continue;
+                }
 
 				if (HighLogic.LoadedSceneIsFlight)
 				{
@@ -265,14 +279,12 @@ namespace BasicDeltaV
 
 					int checks = 0;
 
-					for (int i = group.Icons.Count - 1; i >= 0; i--)
+					for (int j = group.Icons.Count - 1; j >= 0; j--)
 					{
-						//BasicDeltaV.BasicLogging("Stage: {0} - Checks: {1}", panel.Index, checks);
-
 						if (checks >= 2)
 							break;
 
-						StageIcon icon = group.Icons[i];
+						StageIcon icon = group.Icons[j];
 
 						if (icon.grouped)
 						{
