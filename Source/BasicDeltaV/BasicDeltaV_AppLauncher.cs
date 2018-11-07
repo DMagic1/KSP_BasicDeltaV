@@ -128,10 +128,14 @@ namespace BasicDeltaV
 
 		public void ToggleButtonState(bool isOn)
 		{
-			if (isOn)
-				button.Enable();
-			else
-				button.Disable();
+            if (isOn)
+                button.Enable();
+            else
+            {
+                Close();
+
+                button.Disable();
+            }
 		}
 
         private void Reposition()
