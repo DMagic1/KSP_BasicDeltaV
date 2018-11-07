@@ -41,7 +41,7 @@ namespace BasicDeltaV.Simulation
 		public static bool logOutput = false;
 		public static LogMsg log = new LogMsg();
 		public static TimeSpan minSimTime = new TimeSpan(0, 0, 0, 0, 200);
-		public static bool vectoredThrust = false;
+		public static bool vectoredThrust = true;
 		private static readonly object locker = new object();
 		private static readonly Stopwatch timer = new Stopwatch();
 
