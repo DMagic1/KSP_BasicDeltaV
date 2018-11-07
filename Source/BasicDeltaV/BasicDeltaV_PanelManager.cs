@@ -27,8 +27,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Linq;
-using BasicDeltaV.Unity.Unity;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -39,7 +37,6 @@ namespace BasicDeltaV
 {
 	public class BasicDeltaV_PanelManager : MonoBehaviour
 	{
-		//private Dictionary<StageGroup, BasicDeltaV_StagePanel> panels = new Dictionary<StageGroup, BasicDeltaV_StagePanel>();
 		private DictionaryValueList<StageGroup, BasicDeltaV_StagePanel> panels = new DictionaryValueList<StageGroup, BasicDeltaV_StagePanel>();
 		private List<ApplicationLauncherButton> buttons = new List<ApplicationLauncherButton>();
 
@@ -123,7 +120,7 @@ namespace BasicDeltaV
 		{
 			bool iconInfo = false;
 
-            BasicDeltaV_SimpleDeltaVGauge simpledV = null;
+            StageIconInfoBox dvInfo = null;
 
             if (HighLogic.LoadedSceneIsFlight)
 			{
@@ -170,15 +167,11 @@ namespace BasicDeltaV
 
                 //BasicDeltaV.BasicLogging("Info Box: {0}", BasicDeltaV_Loader.PanelInfoBarPrefab == null ? "Null" : "Valid");
                                 
-                StageIconInfoBox dvInfo = Instantiate(BasicDeltaV_Loader.PanelInfoBarPrefab, group.transform);
+                dvInfo = Instantiate(BasicDeltaV_Loader.PanelInfoBarPrefab, group.transform);
                 dvInfo.transform.SetAsFirstSibling();
-
-                simpledV = dvInfo.gameObject.AddComponent<BasicDeltaV_SimpleDeltaVGauge>();
-
-                simpledV.Initialize(group.RectTransform, group.inverseStageIndex, dvInfo, display && BasicDeltaV_Settings.Instance.MoreBasicMode);
 			}
 
-			BasicDeltaV_StagePanel panel = new BasicDeltaV_StagePanel(group.RectTransform, group.inverseStageIndex, iconInfo, display, simpledV);
+			BasicDeltaV_StagePanel panel = new BasicDeltaV_StagePanel(group.RectTransform, group.inverseStageIndex, iconInfo, display, dvInfo);
 
 			panels.Add(group, panel);
 		}
@@ -204,6 +197,12 @@ namespace BasicDeltaV
 				panel.SetVisible(false);
 			}
 		}
+
+        public void ToggleDVText(bool isOn)
+        {
+            for (int i = panels.Count - 1; i >= 0; i--)
+                panels.At(i).ToggleDVText(isOn);
+        }
 
 		public void UpdatePanels()
 		{
@@ -241,29 +240,38 @@ namespace BasicDeltaV
 					continue;
 				}
 
-				if (HighLogic.LoadedSceneIsFlight && BasicDeltaV_Settings.Instance.ShowCurrentStageOnly)
-				{
-					int last = StageManager.LastStage;
-
-					if (group.inverseStageIndex != last)
-					{
-						panel.SetVisible(false);
-						continue;
-					}
-					else if (panel.Stage.deltaV <= 0)
-					{
-						panel.ToggleNoDVModules(true);
-					}
-					else
-					{
-						panel.ToggleNoDVModules(false);
-					}
-				}
-				else if (panel.Stage.deltaV <= 0)
-				{
-					panel.SetVisible(false);
-					continue;
-				}
+                if (HighLogic.LoadedSceneIsFlight && BasicDeltaV_Settings.Instance.ShowCurrentStageOnly)
+                {
+                    if (group.inverseStageIndex == StageManager.LastStage)
+                    {
+                        if (panel.Stage.deltaV <= 0)
+                        {
+                            panel.ToggleNoDVModules(true);
+                        }
+                        else
+                        {
+                            panel.ToggleNoDVModules(false);
+                        }
+                    }
+                    //if (group.inverseStageIndex != StageManager.LastStage)
+                    //{
+                    //    panel.SetVisible(false);
+                    //    continue;
+                    //}
+                    //else if (panel.Stage.deltaV <= 0)
+                    //{
+                    //    panel.ToggleNoDVModules(true);
+                    //}
+                    //else
+                    //{
+                    //    panel.ToggleNoDVModules(false);
+                    //}
+                }
+                else if (panel.Stage.deltaV <= 0)
+                {
+                    panel.SetVisible(false);
+                    continue;
+                }
 
 				if (HighLogic.LoadedSceneIsFlight)
 				{

@@ -56,26 +56,47 @@ namespace BasicDeltaV
 			set { rightPos = value; }
 		}
 
+        public bool CurrentStage
+        {
+            get { return index == StageManager.LastStage; }
+        }
+
 		public Stage Stage
 		{
 			get { return stage; }
-			set { stage = value; }
+			set
+            {
+                stage = value;
+
+                if (value != null)
+                    index = stage.number;
+            }
 		}
 
-        public BasicDeltaV_StagePanel(RectTransform rect, int i, bool right, bool display, BasicDeltaV_SimpleDeltaVGauge simple)
+        public BasicDeltaV_StagePanel(RectTransform rect, int i, bool right, bool display, StageIconInfoBox info)
         {
 			parent = rect;
 			index = i;
 			rightPos = right;
 
-            simpleGauge = simple;
-
 			stage = BasicDeltaV.Instance.GetStage(i);
 
             StartModules();
 
-            if (simpleGauge != null)
-                simpleGauge.Expand(BasicDeltaV_Settings.Instance.MoreBasicMode, display && stage != null && stage.deltaV > 0, stage, index);
+            if (info != null)
+            {
+                simpleGauge = info.gameObject.AddComponent<BasicDeltaV_SimpleDeltaVGauge>();
+
+                bool displayGauge = BasicDeltaV_Settings.Instance.MoreBasicMode;
+
+                if (BasicDeltaV_Settings.Instance.BasicCurrentOnly && index != StageManager.LastStage)
+                    displayGauge = false;
+
+                if (BasicDeltaV.Instance.ComplexRestrictions)
+                    displayGauge = false;
+
+                simpleGauge.Initialize(info, displayGauge && stage != null && stage.stageStartDeltaV > 0, this);
+            }
 
             CreatePanel(right, display && stage != null && stage.deltaV > 0);
         }
@@ -94,13 +115,24 @@ namespace BasicDeltaV
 			if (HighLogic.LoadedSceneIsFlight && BasicDeltaV_Settings.Instance.ShowCurrentStageOnly && index != StageManager.LastStage)
 				display = false;
 
+            bool displayGauge = BasicDeltaV_Settings.Instance.MoreBasicMode;
+
+            if (BasicDeltaV_Settings.Instance.BasicCurrentOnly && index != StageManager.LastStage)
+                displayGauge = false;
+
+            if (BasicDeltaV.Instance.ComplexRestrictions)
+                displayGauge = false;
+
             if (simpleGauge != null)
-                simpleGauge.Expand(BasicDeltaV_Settings.Instance.MoreBasicMode, display && stage.deltaV > 0, stage, index);
+                simpleGauge.Expand(displayGauge && stage != null && stage.stageStartDeltaV > 0);
 
             if (!BasicDeltaV.Instance.DisplayActive)
                 return;
 
 			StartModules();
+
+            if (modules.Count <= 0)
+                return;
 
 			if (panel != null)
 				rightPos = panel.RightPos;
@@ -130,13 +162,19 @@ namespace BasicDeltaV
 		{
 			modules.Clear();
 
+            if (HighLogic.LoadedSceneIsFlight && BasicDeltaV_Settings.Instance.MoreBasicMode && !BasicDeltaV_Settings.Instance.BasicShowStandard)
+                return;
+
             bool active = HighLogic.LoadedSceneIsFlight && index == StageManager.LastStage;
+            
+            if (HighLogic.LoadedSceneIsEditor || (HighLogic.LoadedSceneIsFlight && !BasicDeltaV_Settings.Instance.MoreBasicMode))
+            {
+                if (BasicDeltaV_Settings.Instance.ShowDeltaV && !BasicDeltaV.Instance.ComplexRestrictions)
+                    modules.Add(new BasicDeltaV_DeltaV("ΔV: ", this));
 
-            if (BasicDeltaV_Settings.Instance.ShowDeltaV && !BasicDeltaV.Instance.ComplexRestrictions)
-				modules.Add(new BasicDeltaV_DeltaV("ΔV: ", this));
-
-			if (BasicDeltaV_Settings.Instance.ShowTWR && !BasicDeltaV.Instance.SimpleRestrictions)
-				modules.Add(new BasicDeltaV_TWR("TWR: ", active, this));
+                if (BasicDeltaV_Settings.Instance.ShowTWR && !BasicDeltaV.Instance.SimpleRestrictions)
+                    modules.Add(new BasicDeltaV_TWR("TWR: ", active, this));
+            }
 
 			if (BasicDeltaV_Settings.Instance.ShowMass && !BasicDeltaV.Instance.SimpleRestrictions)
 				modules.Add(new BasicDeltaV_Mass("Mass: ", this));
@@ -160,7 +198,7 @@ namespace BasicDeltaV
             
 			panel.transform.SetAsFirstSibling();
 
-            panel.setPanel(modules, BasicDeltaV_Settings.Instance.PanelAlpha, HighLogic.LoadedSceneIsFlight, BasicDeltaV_Settings.Instance.MoreBasicMode);
+            panel.setPanel(modules, BasicDeltaV_Settings.Instance.PanelAlpha, HighLogic.LoadedSceneIsFlight);
 			
 			if (right)
 				panel.MovePanel(true);
@@ -186,20 +224,45 @@ namespace BasicDeltaV
                 panel.SetAlpha(alpha);
         }
 
+        public void ToggleDVText(bool isOn)
+        {
+            if (simpleGauge != null)
+                simpleGauge.ToggleText(isOn);
+        }
+
         public void SetVisible(bool isOn)
         {
-            if (panel == null)
-                return;
+            if (panel != null)
+            {
+                if (BasicDeltaV_Settings.Instance.ShowCurrentStageOnly && index != StageManager.LastStage)
+                    isOn = false;
 
-            if (panel.gameObject.activeSelf && !isOn)
-            {
-                panel.Unregister();
-                panel.gameObject.SetActive(false);
+                if (panel.gameObject.activeSelf && !isOn)
+                {
+                    panel.Unregister();
+                    panel.gameObject.SetActive(false);
+                }
+                else if (!panel.gameObject.activeSelf && isOn)
+                {
+                    panel.gameObject.SetActive(true);
+                    panel.Register();
+                }
             }
-            else if (!panel.gameObject.activeSelf && isOn)
+
+            if (simpleGauge != null)
             {
-                panel.gameObject.SetActive(true);
-                panel.Register();
+                bool displayGauge = BasicDeltaV_Settings.Instance.MoreBasicMode;
+
+                if (BasicDeltaV_Settings.Instance.BasicCurrentOnly && index != StageManager.LastStage)
+                    displayGauge = false;
+
+                if (BasicDeltaV.Instance.ComplexRestrictions)
+                    displayGauge = false;
+
+                if (!isOn && stage != null && stage.deltaV <= 0)
+                    isOn = true;
+
+                simpleGauge.Expand(displayGauge && isOn && stage != null && stage.stageStartDeltaV > 0);
             }
         }
 
