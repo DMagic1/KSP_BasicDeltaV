@@ -95,7 +95,8 @@ namespace BasicDeltaV.Simulation
 			partSim.resourceFlowStates.Reset();
 			partSim.resources.Reset();
             partSim.maxResources.Reset();
-			partSim.parent = null;
+            partSim.maxResourceFlowStates.Reset();
+            partSim.parent = null;
 			partSim.baseCost = 0d;
 			partSim.baseMass = 0d;
 			partSim.baseMassForCoM = 0d;
@@ -405,6 +406,59 @@ namespace BasicDeltaV.Simulation
 
 			return mass;
 		}
+
+        public double GetFullMass(int currentStage, HashSet<int> types)
+        {
+            if (decoupledInStage >= currentStage)
+                return 0;
+
+            double mass = 0;
+
+            for (int i = 0; i < maxResources.Types.Count; i++)
+            {
+                foreach (int type in types)
+                {
+                    if (type == maxResources.Types[i])
+                    {
+                        mass += maxResources.GetResourceMass(type);
+                        break;
+                    }
+                }
+            }
+
+            return mass;
+        }
+
+        public double GetFullMassOverBase(int currentStage, HashSet<int> resourceTypes)
+        {
+            if (decoupledInStage >= currentStage)
+                return 0;
+
+            double mass = 0;
+
+            for (int i = 0; i < maxResources.Types.Count; i++)
+            {
+                foreach (int type in resourceTypes)
+                {
+                    if (type == maxResources.Types[i])
+                    {
+                        if (maxResources.HasType(type) && maxResources[type] > SimManager.RESOURCE_PART_EMPTY_THRESH)
+                        {
+                            mass += maxResources.GetResourceMass(type);
+                        }
+
+                        if (resources.HasType(type) && resources[type] > SimManager.RESOURCE_PART_EMPTY_THRESH)
+                        {
+                            mass -= resources.GetResourceMass(type);
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            return mass;
+        }
         
 		public double GetCost(int currentStage)
 		{
@@ -435,18 +489,18 @@ namespace BasicDeltaV.Simulation
 		}
 
 		// This is a new function for STAGE_STACK_FLOW(_BALANCE)
-		public void GetSourceSet(int type, bool includeSurfaceMountedParts, List<PartSim> allParts, HashSet<PartSim> visited, HashSet<PartSim> allSources, LogMsg log, String indent)
+		public void GetSourceSet(int type, bool includeSurfaceMountedParts, List<PartSim> allParts, HashSet<PartSim> visited, HashSet<PartSim> allSources, bool checkMax, LogMsg log, String indent)
 		{
 			// Initial version of support for new flow mode
 
 			// Call a modified version of the old GetSourceSet code that adds all potential sources rather than stopping the recursive scan
 			// when certain conditions are met
 			int priMax = int.MinValue;
-			GetSourceSet_Internal(type, includeSurfaceMountedParts, allParts, visited, allSources, ref priMax, log, indent);
+			GetSourceSet_Internal(type, includeSurfaceMountedParts, allParts, visited, allSources, checkMax, ref priMax, log, indent);
 			if (log != null) log.AppendLine(allSources.Count, " parts with priority of ", priMax);
 		}
 
-		public void GetSourceSet_Internal(int type, bool includeSurfaceMountedParts, List<PartSim> allParts, HashSet<PartSim> visited, HashSet<PartSim> allSources, ref int priMax, LogMsg log, String indent)
+		public void GetSourceSet_Internal(int type, bool includeSurfaceMountedParts, List<PartSim> allParts, HashSet<PartSim> visited, HashSet<PartSim> allSources, bool checkMax, ref int priMax, LogMsg log, String indent)
 		{
 			if (log != null)
 			{
@@ -488,7 +542,7 @@ namespace BasicDeltaV.Simulation
 						if (log != null) log.Append(indent, "Adding fuel target as source (", partSim.name, ":")
 											.AppendLine(partSim.partId, ")");
 
-						partSim.GetSourceSet_Internal(type, includeSurfaceMountedParts, allParts, visited, allSources, ref priMax, log, indent);
+						partSim.GetSourceSet_Internal(type, includeSurfaceMountedParts, allParts, visited, allSources, checkMax, ref priMax, log, indent);
 					}
 				}
 			}
@@ -513,7 +567,7 @@ namespace BasicDeltaV.Simulation
 								if (log != null) log.Append(indent, "Adding surface part as source (", partSim.name, ":")
 													.AppendLine(partSim.partId, ")");
 
-								partSim.GetSourceSet_Internal(type, includeSurfaceMountedParts, allParts, visited, allSources, ref priMax, log, indent);
+								partSim.GetSourceSet_Internal(type, includeSurfaceMountedParts, allParts, visited, allSources, checkMax, ref priMax, log, indent);
 							}
 						}
 					}
@@ -553,7 +607,7 @@ namespace BasicDeltaV.Simulation
                                         if (log != null) log.Append(indent, "Adding attached part as source  (", attachSim.attachedPartSim.name, ":")
                                                             .AppendLine(attachSim.attachedPartSim.partId, ")");
 
-                                        attachSim.attachedPartSim.GetSourceSet_Internal(type, includeSurfaceMountedParts, allParts, visited, allSources, ref priMax, log, indent);
+                                        attachSim.attachedPartSim.GetSourceSet_Internal(type, includeSurfaceMountedParts, allParts, visited, allSources, checkMax, ref priMax, log, indent);
                                     }
 								}
 							}
@@ -564,9 +618,9 @@ namespace BasicDeltaV.Simulation
 
 			// If the part is fuel container for searched type of fuel (i.e. it has capability to contain that type of fuel and the fuel 
 			// type was not disabled) and it contains fuel, it adds itself.
-			if (resources.HasType(type) && resourceFlowStates[type] > 0.0)
+			if (checkMax ? (maxResources.HasType(type)) : (resources.HasType(type) && resourceFlowStates[type] > 0.0))
 			{
-				if (resources[type] > resRequestRemainingThreshold)
+				if (checkMax ? (maxResources[type] > SimManager.RESOURCE_MIN) : (resources[type] > resRequestRemainingThreshold))
 				{
 					// Get the priority of this tank
 					int pri = GetResourcePriority();
