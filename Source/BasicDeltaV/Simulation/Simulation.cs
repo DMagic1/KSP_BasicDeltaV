@@ -34,7 +34,8 @@ namespace BasicDeltaV.Simulation
 		private readonly Stopwatch _timer;
 		private List<EngineSim> activeEngines;
 		private List<EngineSim> allEngines;
-		private List<PartSim> allFuelLines;
+        private List<EngineSim> stageEngines;
+        private List<PartSim> allFuelLines;
 		private List<PartSim> allParts;
 		private double atmosphere;
 		private int currentStage;
@@ -44,8 +45,10 @@ namespace BasicDeltaV.Simulation
 		private List<PartSim> dontStageParts;
 		private List<List<PartSim>> dontStagePartsLists;
 		private HashSet<PartSim> drainingParts;
-		private HashSet<int> drainingResources;
-		private double gravity;
+        private HashSet<PartSim> maxResourceParts;
+        private HashSet<int> drainingResources;
+        private HashSet<int> maxResources;
+        private double gravity;
 		// A dictionary for fast lookup of Part->PartSim during the preparation phase
 		private Dictionary<Part, PartSim> partSimLookup;
 		private LogMsg log;
@@ -55,7 +58,8 @@ namespace BasicDeltaV.Simulation
 		private double simpleTotalThrust;
         private double simpleActualTotalThrust;
         private double stageStartMass;
-		private Vector3d stageStartCom;
+        private double stageFullMass;
+        private Vector3d stageStartCom;
 		private double stageTime;
 		private double stepEndMass;
 		private double stepStartMass;
@@ -77,18 +81,27 @@ namespace BasicDeltaV.Simulation
 		public VesselType vesselType;
 		private WeightedVectorAverager vectorAverager;
 
-		public Simulation()
+        double fullSimpleThrust;
+        Vector3 fullVecThrust;
+        double fullStageFlowRate;
+        double fullStageIspFlowRate;
+        double fullISP;
+
+        public Simulation()
 		{
 			_timer = new Stopwatch();
 			activeEngines = new List<EngineSim>();
 			allEngines = new List<EngineSim>();
+            stageEngines = new List<EngineSim>();
 			allFuelLines = new List<PartSim>();
 			allParts = new List<PartSim>();
 			decoupledParts = new HashSet<PartSim>();
 			dontStagePartsLists = new List<List<PartSim>>();
 			drainingParts = new HashSet<PartSim>();
-			drainingResources = new HashSet<int>();
-			partSimLookup = new Dictionary<Part, PartSim>();
+            maxResourceParts = new HashSet<PartSim>();
+            drainingResources = new HashSet<int>();
+            maxResources = new HashSet<int>();
+            partSimLookup = new Dictionary<Part, PartSim>();
 			partList = new List<Part>();
 			totalStageThrustForce = new ForceAccumulator();
 			vectorAverager = new WeightedVectorAverager();
@@ -125,6 +138,18 @@ namespace BasicDeltaV.Simulation
 			}
 		}
 
+        //private double ShipResourceMaxMass(int resourceType)
+        //{
+        //    double mass = 0;
+
+        //    foreach (PartSim partSim in maxResourceParts)
+        //    {
+        //        mass += partSim.GetFullMassOverBase(currentStage, resourceType);
+        //    }
+
+        //    return mass;
+        //}
+
 		// This function prepares the simulation by creating all the necessary data structures it will 
 		// need during the simulation.  All required data is copied from the core game data structures 
 		// so that the simulation itself can be run in a background thread without having issues with 
@@ -150,9 +175,12 @@ namespace BasicDeltaV.Simulation
 			allParts.Clear();
 			allFuelLines.Clear();
 			drainingParts.Clear();
-			allEngines.Clear();
+            maxResourceParts.Clear();
+            allEngines.Clear();
+            stageEngines.Clear();
 			activeEngines.Clear();
 			drainingResources.Clear();
+            maxResources.Clear();
 
 			// A dictionary for fast lookup of Part->PartSim during the preparation phase
 			partSimLookup.Clear();
@@ -356,8 +384,12 @@ namespace BasicDeltaV.Simulation
 				// Update active engines and resource drains
 				UpdateResourceDrains();
 
+                UpdateStageResourceSources();
+
 				// Update the masses of the parts to correctly handle "no physics" parts
 				stageStartMass = UpdatePartMasses();
+
+                stageFullMass = UpdateFullResourceMass();
 
 				if (log != null)
 					allParts[0].DumpPartToLog(log, "", allParts);
@@ -375,7 +407,10 @@ namespace BasicDeltaV.Simulation
 
 				CalculateThrustAndISP();
 
+                CalculateFullThrustAndISP();
+
                 stage.startMass = stageStartMass;
+                stage.stageFullMass = stageFullMass;
 
                 // Store various things in the Stage object
                 stage.simpleThrust = simpleTotalThrust;
@@ -554,7 +589,8 @@ namespace BasicDeltaV.Simulation
 					stepStartMass = stepEndMass;
 				}
 
-                //stage.stageTotalDeltaV = (vecThrust * (float)((currentisp * GRAVITY * Math.Log(stage.startMass / stage.endMass)) / simpleTotalThrust)).magnitude;
+                if (stage.stageFullMass > stage.endMass && stage.stageFullMass > 0d && stage.endMass > 0d)
+                    stage.stageStartDeltaV = (fullVecThrust * (float)((fullISP * GRAVITY * Math.Log(stage.stageFullMass / stage.endMass)) / fullSimpleThrust)).magnitude;
 
                 // Store more values in the Stage object and stick it in the array
 
@@ -611,6 +647,7 @@ namespace BasicDeltaV.Simulation
 				// For each stage we total up the cost, mass, deltaV and time for this stage and all the stages above
 				for (int j = i; j >= 0; j--)
 				{
+                    stages[i].totalStartDeltaV += stages[j].stageStartDeltaV;
 					stages[i].totalDeltaV += stages[j].deltaV;
 					stages[i].totalTime += stages[j].time;
 					stages[i].partCount = i > 0 ? stages[i].totalPartCount - stages[i - 1].totalPartCount : stages[i].totalPartCount;
@@ -689,6 +726,18 @@ namespace BasicDeltaV.Simulation
 			return totalMass;
 		}
 
+        public double UpdateFullResourceMass()
+        {
+            double totalMass = stageStartMass;
+
+            foreach (PartSim partSim in maxResourceParts)
+            {
+                totalMass += partSim.GetFullMassOverBase(currentStage, maxResources);
+            }
+
+            return totalMass;
+        }
+
 		// Make sure we free them all, even if they should all be free already at this point
 		public void FreePooledObject()
 		{
@@ -766,6 +815,19 @@ namespace BasicDeltaV.Simulation
 			}
 		}
 
+        private void UpdateStageEngines()
+        {
+            stageEngines.Clear();
+            for (int i = 0; i < allEngines.Count; i++)
+            {
+                EngineSim engine = allEngines[i];
+                if (engine.partSim.inverseStage >= currentStage)
+                {
+                    stageEngines.Add(engine);
+                }
+            }
+        }
+
 		private void CalculateThrustAndISP()
 		{
 			// Reset all the values
@@ -823,6 +885,31 @@ namespace BasicDeltaV.Simulation
 			}
 		}
 
+        private void CalculateFullThrustAndISP()
+        {
+            fullSimpleThrust = 0;
+            fullVecThrust = Vector3.zero;
+            fullStageFlowRate = 0d;
+            fullStageIspFlowRate = 0d;
+            fullISP = 0;
+
+            for (int i = 0; i < stageEngines.Count; i++)
+            {
+                EngineSim engine = stageEngines[i];
+
+                fullSimpleThrust += engine.fullThrust;
+                fullVecThrust += ((float)engine.fullThrust * engine.thrustVec);
+
+                fullStageFlowRate += engine.MaxResourceConsumptions.Mass;
+                fullStageIspFlowRate += engine.MaxResourceConsumptions.Mass * engine.isp;
+            }
+
+            if (fullStageFlowRate > 0 && fullStageIspFlowRate > 0)
+                fullISP = fullStageIspFlowRate / fullStageFlowRate;
+            else
+                fullISP = 0;
+        }
+
 		// This function does all the hard work of working out which engines are burning, which tanks are being drained 
 		// and setting the drain rates
 		private void UpdateResourceDrains()
@@ -874,6 +961,28 @@ namespace BasicDeltaV.Simulation
 				log.Flush();
 			}
 		}
+
+        private void UpdateStageResourceSources()
+        {
+            UpdateStageEngines();
+
+            maxResourceParts.Clear();
+
+            maxResources.Clear();
+
+            for (int i = 0; i < stageEngines.Count; i++)
+            {
+                EngineSim engine = stageEngines[i];
+
+                if (engine.SetPossibleResourceDrains(log, allParts, maxResourceParts))
+                {
+                    for (int j = 0; j < engine.ResourceConsumptions.Types.Count; j++)
+                    {
+                        maxResources.Add(engine.ResourceConsumptions.Types[j]);
+                    }
+                }
+            }
+        }
 
 		// This function works out if it is time to stage
 		private bool AllowedToStage()
