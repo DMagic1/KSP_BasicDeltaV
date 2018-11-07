@@ -18,8 +18,7 @@ namespace BasicDeltaV.Unity.Unity
 
         private bool rightPos = false;
         private bool shifted = false;
-
-        private bool basicMode = false;
+        
         private bool noDVMode = false;
 
         private RectTransform rect;
@@ -75,10 +74,8 @@ namespace BasicDeltaV.Unity.Unity
             Destroy(gameObject);
         }
 
-        public void setPanel(List<IBasicModule> modules, float alpha, bool right, bool basic)
+        public void setPanel(List<IBasicModule> modules, float alpha, bool right)
         {
-            basicMode = basic;
-
             CreateModules(modules);
 
             SetAlpha(alpha);
@@ -92,6 +89,8 @@ namespace BasicDeltaV.Unity.Unity
                     rect.anchoredPosition = new Vector2(24, rect.anchoredPosition.y);
                 }
             }
+
+            OnUpdate();
 
             BasicDVPanelManager.Instance.RegisterPanel(this);
         }
@@ -139,13 +138,13 @@ namespace BasicDeltaV.Unity.Unity
                 m_Header.color = c;
             }
         }
-        
+
         private void CreateModules(List<IBasicModule> modules)
         {
             if (modules == null || modules.Count == 0)
                 return;
 
-            Modules = CalculateOrder(modules);            
+            Modules = CalculateOrder(modules);
         }
 
         private List<IBasicModule> CalculateOrder(List<IBasicModule> modules)
@@ -156,10 +155,7 @@ namespace BasicDeltaV.Unity.Unity
             for (int i = modules.Count - 1; i >= 0; i--)
             {
                 IBasicModule mod = modules[i];
-
-                if (basicMode && !mod.ShowInBasic)
-                    continue;
-
+                
                 if (noDVMode && mod.DVModule)
                     continue;
 
@@ -300,13 +296,7 @@ namespace BasicDeltaV.Unity.Unity
 
                 if (mod == null)
                     continue;
-
-                //if (basicMode && !mod.ShowInBasic)
-                //    continue;
-
-                //if (noDVMode && mod.DVModule)
-                //    continue;
-
+                
                 mod.Update(panelString);
 
                 if (mod.LineBreak)
