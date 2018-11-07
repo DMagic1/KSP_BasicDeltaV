@@ -24,7 +24,6 @@
 #endregion
 
 using System;
-using System.Collections;
 using System.Reflection;
 using System.Linq;
 using BasicDeltaV.Unity;
@@ -54,10 +53,10 @@ namespace BasicDeltaV
 		private static GameObject[] loadedPrefabs;
 
 		private static GameObject toolbarPrefab;
-		private static GameObject panelPrefab;
         private static GameObject simplePanelPrefab;
 
         private static StageIconInfoBox panelInfoBarPrefab;
+        private static TooltipController_Text tooltipPrefab;
 
 		private static Sprite titleSprite;
 		private static Sprite footerSprite;
@@ -68,19 +67,13 @@ namespace BasicDeltaV
 		private static Sprite unselectedSprite;
 		private static Sprite windowSprite;
 		private static Sprite stageGroupSprite;
-
         private static Sprite twrGaugeSprite;
-
+        
 		public static GameObject ToolbarPrefab
 		{
 			get { return toolbarPrefab; }
 		}
-
-		public static GameObject PanelPrefab
-		{
-			get { return panelPrefab; }
-		}
-
+        
         public static GameObject SimplePanelPrefab
         {
             get { return simplePanelPrefab; }
@@ -91,12 +84,17 @@ namespace BasicDeltaV
             get { return panelInfoBarPrefab; }
         }
 
+        public static TooltipController_Text TooltipPrefab
+        {
+            get { return tooltipPrefab; }
+        }
+
         public static Sprite TWRGaugeSprite
         {
             get { return twrGaugeSprite; }
         }
-
-		private void Awake()
+        
+        private void Awake()
 		{
 			if (loaded)
 			{
@@ -149,11 +147,11 @@ namespace BasicDeltaV
 
 		private void loadSprites()
 		{
-            Texture2D twr = GameDatabase.Instance.GetTexture("BasicDeltaV/Resources/TWRPointer", false);
+            Texture2D twr = GameDatabase.Instance.GetTexture("BasicDeltaV/Resources/TWRGauge", false);
 
             twrGaugeSprite = Sprite.Create(twr, new Rect(0, 0, twr.width, twr.height), new Vector2(0.5f, 0.5f));
-
-			ContractsApp prefab = null;
+            
+            ContractsApp prefab = null;
 
 			var prefabs = Resources.FindObjectsOfTypeAll<ContractsApp>();
 
@@ -270,7 +268,7 @@ namespace BasicDeltaV
 
                 StageIconInfoBox infoBar = fields[12].GetValue(prefabFlight.stageIconPrefab) as StageIconInfoBox;
 
-                panelInfoBarPrefab = Instantiate(infoBar, infoBar.transform.parent);
+                panelInfoBarPrefab = Instantiate(infoBar, BasicDeltaV_Settings.Instance.transform);
                 panelInfoBarPrefab.gameObject.name = "BasicerDeltaV";
 
                 RectTransform infoRect = panelInfoBarPrefab.GetComponent<RectTransform>();
@@ -280,25 +278,38 @@ namespace BasicDeltaV
                 infoRect.anchoredPosition = new Vector2(25, 12);
 
                 panelInfoBarPrefab.GetComponent<LayoutElement>().ignoreLayout = true;
-
-                panelInfoBarPrefab.GetComponentInChildren<Slider>().targetGraphic.raycastTarget = true;
-
-                panelInfoBarPrefab.SetCaption("ΔV");
+                
+                panelInfoBarPrefab.SetCaption(string.Format("<color=#{0}> ΔV</color>", BasicDeltaV.TextColor));
                 panelInfoBarPrefab.SetProgressBarBgColor(new Color(0.51765f, 0.71765f, 0.003922f, 0.6f));
                 panelInfoBarPrefab.SetProgressBarColor(new Color(1, 1, 0.078431f, 0.6f));
 
-                TooltipController_Text tool = panelInfoBarPrefab.GetComponent<TooltipController_Text>();
+                Slider slider = panelInfoBarPrefab.GetComponentInChildren<Slider>();
+
+                RectTransform sliderRect = slider.GetComponent<RectTransform>();
+
+                sliderRect.sizeDelta = new Vector2(sliderRect.sizeDelta.x, 16);
+                sliderRect.anchoredPosition = new Vector2(sliderRect.anchoredPosition.x, -2);
+
+                TextMeshProUGUI captionText = panelInfoBarPrefab.GetComponentsInChildren<TextMeshProUGUI>()[1];
+
+                captionText.color = Color.white;
+
+                RectTransform captionRect = captionText.rectTransform;
+
+                captionRect.sizeDelta = new Vector2(captionRect.sizeDelta.x, 16);
+
+                tooltipPrefab = panelInfoBarPrefab.GetComponent<TooltipController_Text>();
 
                 //BasicDeltaV.BasicLogging("Toolip: Enabled: {0} tooltip prefab: {1} instance" , tool.enabled
                 //    , tool.prefab == null ? "Null" : "Valid", tool.TooltipPrefabInstance == null ? "Null" : "Valid");
 
-                tool.enabled = true;
-                tool.continuousUpdate = true;
-
+                tooltipPrefab.enabled = true;
+                tooltipPrefab.continuousUpdate = true;
+                
                 Destroy(panelInfoBarPrefab.GetComponentInChildren<TextMeshProUGUI>().gameObject);
                 Destroy(panelInfoBarPrefab.GetComponentInChildren<Image>().gameObject);
 
-                BasicDeltaV.BasicLogging("DV Panel Prefab processed");
+                //BasicDeltaV.BasicLogging("DV Panel Prefab processed");
             }
             catch (Exception e)
             {
@@ -342,10 +353,8 @@ namespace BasicDeltaV
 			for (int i = loadedPrefabs.Length - 1; i >= 0; i--)
 			{
 				GameObject o = loadedPrefabs[i];
-
-				if (o.name == "BasicDeltaV_Panel")
-					panelPrefab = o;
-                else if (o.name == "BasicDeltaV_SimplePanel")
+                
+                if (o.name == "BasicDeltaV_SimplePanel")
                     simplePanelPrefab = o;
                 else if (o.name == "BasicDeltaV_AppWindow")
 					toolbarPrefab = o;
