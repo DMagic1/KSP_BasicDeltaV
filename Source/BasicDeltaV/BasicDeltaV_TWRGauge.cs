@@ -54,7 +54,7 @@ namespace BasicDeltaV
             _gauge.gameObject.name = "GaugeTWRPointer";
 
             _gauge.minValue = 0;
-            _gauge.maxValue = 3;
+            _gauge.maxValue = 2;
             _gauge.logarithmic = 10;
             _gauge.exponential = 0;
 
@@ -96,8 +96,8 @@ namespace BasicDeltaV
             if (logTWR < 1)
                 logTWR = 1;
 
-            if (logTWR > 1000)
-                logTWR = 1000;
+            if (logTWR > 100)
+                logTWR = 100;
 
             _gauge.Value = logTWR;
 
@@ -133,8 +133,8 @@ namespace BasicDeltaV
 
         private void OnMapExit()
         {
-            if (!_parentObject.activeSelf && BasicDeltaV_Settings.Instance.MoreBasicMode)
-                _parentObject.SetActive(!BasicDeltaV.Instance.SimpleRestrictions);
+            if (!_parentObject.activeSelf && BasicDeltaV_Settings.Instance.ShowTWRGauge)
+                _parentObject.SetActive(true);
         }
 
         private void OnFlightModeChange(FlightUIMode mode)
@@ -146,8 +146,8 @@ namespace BasicDeltaV
             }
             else if (mode == FlightUIMode.STAGING)
             {
-                if (!_parentObject.activeSelf && BasicDeltaV_Settings.Instance.MoreBasicMode)
-                    _parentObject.SetActive(!BasicDeltaV.Instance.SimpleRestrictions);
+                if (!_parentObject.activeSelf && BasicDeltaV_Settings.Instance.ShowTWRGauge)
+                    _parentObject.SetActive(true);
             }
         }
     }
