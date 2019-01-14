@@ -52,6 +52,7 @@ namespace BasicDeltaV.Simulation
 		public bool resPriorityUseParentInverseStage;
 		public double resRequestRemainingThreshold;
 		public bool isEngine;
+        public bool isRCS;
 		public bool isFuelLine;
 		public bool isFuelTank;
 		public bool isLanded;
@@ -129,6 +130,7 @@ namespace BasicDeltaV.Simulation
                 partSim.noCrossFeedNodeKey = "bottom";
             partSim.decoupledInStage = partSim.DecoupledInStage(p);
 			partSim.isFuelLine = p.HasModule<CModuleFuelLine>();
+            partSim.isRCS = p.HasModule<ModuleRCS>() || p.HasModule<ModuleRCSFX>();
 			partSim.isSepratron = p.IsSepratron();
 			partSim.inverseStage = p.inverseStage;
 			if (log != null) log.AppendLine("inverseStage = ", partSim.inverseStage);
@@ -259,7 +261,42 @@ namespace BasicDeltaV.Simulation
             }            
 		}
 
-		public void DrainResources(double time, LogMsg log)
+        public void CreateRCSSims(List<RCSSim> allRCS, double atmosphere, double mach, bool vectoredThrust, bool fullThrust, LogMsg log)
+        {
+            if (log != null) log.AppendLine("CreateRCSSims for ", this.name);
+            List<ModuleRCS> cacheModuleRCS = part.FindModulesImplementing<ModuleRCS>();
+
+            try
+            {
+                if (cacheModuleRCS.Count > 0)
+                {
+                    //find first active engine, assuming that two are never active at the same time
+                    foreach (ModuleRCS engine in cacheModuleRCS)
+                    {
+                        if (engine.isEnabled)
+                        {
+                            if (log != null) log.AppendLine("Module: ", engine.moduleName);
+                            RCSSim rcsSim = RCSSim.New(
+                                this,
+                                engine,
+                                atmosphere,
+                                (float)mach,
+                                vectoredThrust,
+                                fullThrust,
+                                log);
+
+                            allRCS.Add(rcsSim);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                Debug.Log("[KER] Error Catch in CreateRCSSims");
+            }
+        }
+
+        public void DrainResources(double time, LogMsg log)
 		{
 			//if (log != null) log.Append("DrainResources(", name, ":", partId)
 			//                    .AppendLine(", ", time, ")");
