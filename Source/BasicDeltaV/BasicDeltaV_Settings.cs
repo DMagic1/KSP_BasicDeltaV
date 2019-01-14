@@ -24,7 +24,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
@@ -34,84 +33,47 @@ namespace BasicDeltaV
     [KSPAddon(KSPAddon.Startup.MainMenu, true)]
     public class BasicDeltaV_Settings : MonoBehaviour
     {
-		[Persistent]
-		public bool DisplayActive = true;
         [Persistent]
-        public bool DisplayActiveFlight = true;
+        public bool ShowTWRGauge = true;
         [Persistent]
-        public bool MoreBasicMode = false;
+        public bool ShowDVSliders = true;
         [Persistent]
-        public bool ShowDVText = false;
+        public bool ShowRCS = true;
         [Persistent]
-        public bool BasicCurrentOnly = false;
+        public int VABSituation = 0;
         [Persistent]
-        public bool BasicShowStandard = false;
-        [Persistent]
-        public bool ShowDeltaV = true;
-        [Persistent]
-        public bool ShowTWR = true;
-        [Persistent]
-        public bool ShowBurnTime = true;
-        [Persistent]
-        public bool ShowMass = true;
-        [Persistent]
-        public bool ShowThrust = true;
-        [Persistent]
-        public bool ShowISP = true;
-        [Persistent]
-        public bool ShowBodies = false;
-        [Persistent]
-		public bool ShowAtmosphere = false;
-		[Persistent]
-		public bool ShowCurrentStageOnly = false;
-		[Persistent]
-		public bool StageScaleEditorOnly = true;
-        [Persistent]
-        public string CelestialBody = "Kerbin";
+        public int SPHSituation = 0;
+        
         [Persistent]
         public bool VectoredThrust = true;
-        [Persistent]
-		public float PanelAlpha = 0.5f;
-		[Persistent]
-		public float StageScale = 1;
-        [Persistent]
-        public float ToolbarScale = 1;
-		[Persistent]
-		public float WindowHeight = 280;
-		[Persistent]
-		public float FlightWindowHeight = 280;
-		[Persistent]
-		public string CrewRestrictionType = "AutopilotSkill";
-        [Persistent]
-        public Color LabelColor = Color.white;
-        [Persistent]
-        public Color ReadoutColor = new Color(0.72157f, 0.79216f, 0.44706f);
-
-		public List<string> SkillTypes = new List<string>();
-
+        //[Persistent]
+        //public Color LabelColor = Color.white;
+        //[Persistent]
+        //public Color ReadoutColor = new Color(0.72157f, 0.79216f, 0.44706f);
+        
         private const string fileName = "PluginData/Settings.cfg";
         private string fullPath;
 
         private static bool loaded;
         private static BasicDeltaV_Settings instance;
 
-        private static string _labelColorHex;
-        private static string _readoutColorHex;
+        //private static string _labelColorHex;
+        //private static string _readoutColorHex;
 
         public static BasicDeltaV_Settings Instance
         {
             get { return instance; }
         }
 
-        public static string LabelColorHex
-        {
-            get { return _labelColorHex; }
-        }
+        //public static string LabelColorHex
+        //{
+        //    get { return _labelColorHex; }
+        //}
 
-        public static string ReadoutColorHex
-        {
-            get { return _readoutColorHex; }
-        }
+        //public static string ReadoutColorHex
+        //{
+        //    get { return _readoutColorHex; }
+        //}
 
         private void Awake()
         {
@@ -136,25 +98,8 @@ namespace BasicDeltaV
 				if (Save())
 					BasicDeltaV.BasicLogging("New Settings files generated at:\n{0}", fullPath);
 			}
-
-			SkillTypes = StringList(CrewRestrictionType);
         }
-
-		private List<string> StringList(string input)
-		{
-			string[] array = input.Split(',');
-			List<string> output = new List<string>();
-
-			for (int i = array.Length - 1; i >= 0; i--)
-			{
-				string s = array[i];
-
-				output.Add(s);
-			}
-
-			return output;
-		}
-
+        
         public bool Load()
         {
             bool b = false;
@@ -180,8 +125,8 @@ namespace BasicDeltaV
                 b = false;
             }
 
-            _labelColorHex = ColorUtility.ToHtmlStringRGB(LabelColor);
-            _readoutColorHex = ColorUtility.ToHtmlStringRGB(ReadoutColor);
+            //_labelColorHex = ColorUtility.ToHtmlStringRGB(LabelColor);
+            //_readoutColorHex = ColorUtility.ToHtmlStringRGB(ReadoutColor);
 
             return b;
         }
