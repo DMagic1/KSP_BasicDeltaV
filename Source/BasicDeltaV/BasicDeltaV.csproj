@@ -18,7 +18,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>Output\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;ENABLE_PROFILER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -47,31 +47,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BasicDeltaV.cs" />
-    <Compile Include="BasicDeltaV_AppLauncher.cs" />
+    <Compile Include="BasicDeltaV_SliderGroup.cs" />
+    <Compile Include="Simulation\RCSSim.cs" />
+    <Compile Include="Utilities\BasicDeltaV_DeltaVAppStageHandler.cs" />
+    <Compile Include="Utilities\BasicDeltaV_DeltaVSituationHandler.cs" />
     <Compile Include="Utilities\BasicDeltaV_GameParameters.cs" />
     <Compile Include="BasicDeltaV_Loader.cs" />
-    <Compile Include="BasicDeltaV_PanelManager.cs" />
     <Compile Include="BasicDeltaV_Settings.cs" />
-    <Compile Include="BasicDeltaV_SimpleDeltaVGauge.cs" />
-    <Compile Include="BasicDeltaV_StagePanel.cs" />
     <Compile Include="Utilities\BasicDeltaV_StageGroupHandler.cs" />
-    <Compile Include="Utilities\BasicDeltaV_TextMeshPro.cs" />
     <Compile Include="BasicDeltaV_TWRGauge.cs" />
-    <Compile Include="Utilities\BasicDeltaV_UIAppHandler.cs" />
     <Compile Include="Extensions\PartExtensions.cs" />
-    <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Helpers\Averager.cs" />
     <Compile Include="Helpers\ForceAccumulator.cs" />
     <Compile Include="Helpers\BasicLogger.cs" />
     <Compile Include="Helpers\LogMsg.cs" />
     <Compile Include="Helpers\Pool.cs" />
-    <Compile Include="Modules\BasicDeltaV_BurnTime.cs" />
-    <Compile Include="Modules\BasicDeltaV_DeltaV.cs" />
-    <Compile Include="Modules\BasicDeltaV_ISP.cs" />
-    <Compile Include="Modules\BasicDeltaV_Mass.cs" />
-    <Compile Include="Modules\BasicDeltaV_Module.cs" />
-    <Compile Include="Modules\BasicDeltaV_Thrust.cs" />
-    <Compile Include="Modules\BasicDeltaV_TWR.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Simulation\AttachNodeSim.cs" />
     <Compile Include="Simulation\EngineSim.cs" />
@@ -80,12 +70,6 @@
     <Compile Include="Simulation\SimManager.cs" />
     <Compile Include="Simulation\Simulation.cs" />
     <Compile Include="Simulation\Stage.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\BasicDeltaV.Unity\BasicDeltaV.Unity.csproj">
-      <Project>{192cd7e1-2c59-4808-8ff2-b11ce0647ee7}</Project>
-      <Name>BasicDeltaV.Unity</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
