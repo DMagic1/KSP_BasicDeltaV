@@ -35,6 +35,7 @@ namespace BasicDeltaV.Simulation
 		private List<EngineSim> activeEngines;
 		private List<EngineSim> allEngines;
         private List<EngineSim> stageEngines;
+        private List<RCSSim> allRCS;
         private List<PartSim> allFuelLines;
 		private List<PartSim> allParts;
 		private double atmosphere;
@@ -80,6 +81,7 @@ namespace BasicDeltaV.Simulation
 		public String vesselName;
 		public VesselType vesselType;
 		private WeightedVectorAverager vectorAverager;
+        private double RCSDeltaV;
 
         double fullSimpleThrust;
         Vector3 fullVecThrust;
@@ -93,6 +95,7 @@ namespace BasicDeltaV.Simulation
 			activeEngines = new List<EngineSim>();
 			allEngines = new List<EngineSim>();
             stageEngines = new List<EngineSim>();
+            allRCS = new List<RCSSim>();
 			allFuelLines = new List<PartSim>();
 			allParts = new List<PartSim>();
 			decoupledParts = new HashSet<PartSim>();
@@ -216,6 +219,10 @@ namespace BasicDeltaV.Simulation
                 if (partSim.isEngine)
                 {
                     partSim.CreateEngineSims(allEngines, atmosphere, mach, vectoredThrust, fullThrust, log);
+                }
+                if (partSim.isRCS)
+                {
+                    partSim.CreateRCSSims(allRCS, atmosphere, mach, vectoredThrust, fullThrust, log);
                 }
 
                 partId++;
@@ -356,7 +363,7 @@ namespace BasicDeltaV.Simulation
 			}
 			else
 			{
-				ActivateStage();
+				ActivateStage(true);
 				doingCurrent = false;
 			}
 
@@ -410,15 +417,16 @@ namespace BasicDeltaV.Simulation
                 CalculateFullThrustAndISP();
 
                 stage.startMass = stageStartMass;
+                stage.endMass = ShipMass;
                 stage.stageFullMass = stageFullMass;
 
                 // Store various things in the Stage object
-                stage.simpleThrust = simpleTotalThrust;
-                stage.actualSimpleThrust = simpleActualTotalThrust;
-				stage.thrust = totalStageThrust;
+                stage.thrust = simpleTotalThrust;
+                stage.actualThrust = simpleActualTotalThrust;
+				stage.vectoredThrust = totalStageThrust;
 				stage.thrustToWeight = totalStageThrust / (stageStartMass * gravity);
 				stage.maxThrustToWeight = stage.thrustToWeight;
-				stage.actualThrust = totalStageActualThrust;
+				stage.actualVectoredThrust = totalStageActualThrust;
 				stage.actualThrustToWeight = totalStageActualThrust / (stageStartMass * gravity);
                 stage.thrustVector = vecThrust;
                 stage.actualThrustVector = vecActualThrust;
@@ -426,9 +434,14 @@ namespace BasicDeltaV.Simulation
                 stage.totalActualExhaustVelocity = totalActualExhaustVelocity;
                 stage.totalVectoredExhaustVelocity = totalVectoredExhaustVelocity;
                 stage.totalVectoredActualExhaustVelocity = totalActualVectoredExhaustVelocity;
+
+                CalculateRCS(gravity, false);
+
+                stage.RCSdeltaVStart = RCSDeltaV;
+
 				if (log != null)
 				{
-					log.AppendLine("stage.thrust = ", stage.thrust);
+					log.AppendLine("stage.thrust = ", stage.vectoredThrust);
 					log.AppendLine("StageMass = ", stageStartMass);
 					log.AppendLine("Initial maxTWR = ", stage.maxThrustToWeight);
 				}
@@ -438,7 +451,7 @@ namespace BasicDeltaV.Simulation
 
 				// torque divided by thrust. imagine that all engines are at the end of a lever that tries to turn the ship.
 				// this numerical value, in meters, would represent the length of that lever.
-				double torqueLeverArmLength = (stage.thrust <= 0) ? 0 : stage.maxThrustTorque / stage.thrust;
+				double torqueLeverArmLength = (stage.vectoredThrust <= 0) ? 0 : stage.maxThrustTorque / stage.vectoredThrust;
 
 				// how far away are the engines from the CoM, actually?
 				double thrustDistance = (stageStartCom - totalStageThrustForce.GetAverageForceApplicationPoint()).magnitude;
@@ -598,9 +611,14 @@ namespace BasicDeltaV.Simulation
                 stage.deltaV = vecStageDeltaV.magnitude;
 				stage.resourceMass = stageStartMass - stepEndMass;
 
-				// Recalculate effective stage isp from the stage deltaV (flip the standard deltaV calculation around)
-				// Note: If the mass doesn't change then this is a divide by zero
-				if (stageStartMass != stepStartMass)
+                if (HighLogic.LoadedSceneIsEditor) //this is only needed in the VAB.
+                    CalculateRCS(gravity, true);
+
+                stage.RCSdeltaVEnd = RCSDeltaV;
+
+                // Recalculate effective stage isp from the stage deltaV (flip the standard deltaV calculation around)
+                // Note: If the mass doesn't change then this is a divide by zero
+                if (stageStartMass != stepStartMass)
 				{
 					stage.isp = stage.deltaV / (GRAVITY * Math.Log(stageStartMass / stepStartMass));
 				}
@@ -631,7 +649,7 @@ namespace BasicDeltaV.Simulation
 				}
 
 				// Activate the next stage
-				ActivateStage();
+				ActivateStage(currentStage == lastStage);
 
 				if (log != null)
 				{
@@ -753,8 +771,13 @@ namespace BasicDeltaV.Simulation
 			{
 				engine.Release();
 			}
-			//MonoBehaviour.print("FreePooledObject pool size after = " + EngineSim.pool.Count());
-		}
+
+            foreach (RCSSim engine in allRCS)
+            {
+                engine.Release();
+            }
+            //MonoBehaviour.print("FreePooledObject pool size after = " + EngineSim.pool.Count());
+        }
 
 		private void BuildDontStageLists(LogMsg log)
 		{
@@ -852,14 +875,15 @@ namespace BasicDeltaV.Simulation
 				EngineSim engine = activeEngines[i];
 
 				simpleTotalThrust += engine.thrust;
-                simpleActualTotalThrust += engine.actualThrust;
-				vecThrust += ((float)engine.thrust * engine.thrustVec);
-				vecActualThrust += ((float)engine.actualThrust * engine.thrustVec);
+                simpleActualTotalThrust += (engine.isOperational ? engine.actualThrust : engine.thrust);
+
+                vecThrust += ((float)engine.thrust * engine.thrustVec);
+				vecActualThrust += ((float)(engine.isOperational ? engine.actualThrust : engine.thrust) * engine.thrustVec);
 
                 totalVectoredExhaustVelocity += engine.thrustVec * (float)((engine.isp * BasicDeltaV.GRAVITY) / engine.thrust);
                 totalExhaustVelocity += totalVectoredExhaustVelocity.magnitude;
 
-                totalActualVectoredExhaustVelocity += engine.thrustVec * (float)((engine.isp * BasicDeltaV.GRAVITY) / engine.actualThrust);
+                totalActualVectoredExhaustVelocity += engine.thrustVec * (float)((engine.isp * BasicDeltaV.GRAVITY) / (engine.isOperational ? engine.actualThrust : engine.thrust));
                 totalActualExhaustVelocity += totalActualVectoredExhaustVelocity.magnitude;
 
 				totalStageFlowRate += engine.ResourceConsumptions.Mass;
@@ -910,9 +934,200 @@ namespace BasicDeltaV.Simulation
                 fullISP = 0;
         }
 
-		// This function does all the hard work of working out which engines are burning, which tanks are being drained 
-		// and setting the drain rates
-		private void UpdateResourceDrains()
+        //by jrbudda.
+        private void CalculateRCS(double localGravity, bool final)
+        {
+            // Reset all the values
+            var vecThrust = Vector3.zero;
+            var vecActualThrust = Vector3.zero;
+            var simpleTotalThrust = 0d;
+            var totalStageFlowRate = 0d;
+            var totalStageIspFlowRate = 0d;
+
+            var FlowRateByFuel = new Dictionary<int, double>();
+            var IspFlowRateByFuel = new Dictionary<int, double>();
+            var FuelSources = new Dictionary<int, double>();
+            var thrustByFuel = new Dictionary<int, double>();
+
+            var fueltypes = new HashSet<int>();
+
+            //populate
+            foreach (RCSSim engine in allRCS)
+            {
+                engine.DumpEngineToLog(log);
+
+                foreach (int type in engine.resourceConsumptions.Types)
+                {
+                    if (!fueltypes.Contains(type))
+                    {
+                        fueltypes.Add(type);
+                        FlowRateByFuel.Add(type, 0);
+                        IspFlowRateByFuel.Add(type, 0);
+                        thrustByFuel.Add(type, 0);
+                        FuelSources.Add(type, 0);
+                    }
+                }
+            }
+            foreach (int fuel in fueltypes)
+            {
+                foreach (PartSim p in allParts)
+                {
+                    if (p.resources.HasType(fuel) && p.resourceFlowStates[fuel] > 0.0)
+                    {
+                        FuelSources[fuel] += p.resources[fuel];
+                    }
+                }
+            }
+
+            foreach (RCSSim engine in allRCS)
+            {
+                bool active = engine.isActive;
+
+                foreach (int type in engine.resourceConsumptions.Types)
+                {
+                    if (FuelSources[type] < SimManager.RESOURCE_MIN)
+                        active = false;
+                }
+
+                if (active)
+                {
+                    simpleTotalThrust += engine.thrust;
+                    vecThrust += ((float)engine.thrust * engine.thrustVec);
+                    totalStageFlowRate += engine.resourceConsumptions.Mass;
+                    totalStageIspFlowRate += engine.resourceConsumptions.Mass * engine.isp;
+                }
+            }
+
+            var preMAss = ShipMass;
+            var mass = preMAss;
+
+            double deltav = 0;
+            int loopcount = 0;
+
+
+            if (log != null)
+            {
+                log.AppendLine("**RCS PRE ");
+                log.AppendLine("   StartingMss = ", mass);
+                foreach (var type in fueltypes)
+                {
+                    log.AppendLine("   **Fuel " + type);
+                    log.AppendLine("      FuelMass = ", FuelSources[type]);
+                }
+            }
+
+            //simulate
+            while (true)
+            {
+
+                //so... many... loops....
+
+                //reset
+                foreach (int fuel in fueltypes)
+                {
+                    thrustByFuel[fuel] = 0;
+                    FlowRateByFuel[fuel] = 0;
+                    IspFlowRateByFuel[fuel] = 0;
+                }
+
+                var combinedFlowRate = 0d;
+                var combinedIspFlowRate = 0d;
+
+                //check for flamed out engines.
+                foreach (RCSSim engine in allRCS)
+                {
+                    bool active = engine.isActive;
+
+                    foreach (int type in engine.resourceConsumptions.Types)
+                    {
+                        if (FuelSources[type] < SimManager.RESOURCE_MIN)
+                            active = false;
+                    }
+
+                    if (active)
+                    {
+                        foreach (int type in engine.resourceConsumptions.Types)
+                        {
+                            thrustByFuel[type] += engine.thrust;
+                            FlowRateByFuel[type] += engine.resourceConsumptions[type];
+                            IspFlowRateByFuel[type] += engine.resourceConsumptions[type] * engine.isp;
+
+                            combinedFlowRate += engine.resourceConsumptions[type];
+                            combinedIspFlowRate += engine.resourceConsumptions[type] * engine.isp;
+
+                        }
+                    }
+                }
+
+
+                double startmass = mass;
+
+                double burnTime = double.MaxValue;
+
+                foreach (int fuel in fueltypes)
+                { //min time til something goes empty.
+                    if (FuelSources[fuel] > SimManager.RESOURCE_MIN)
+                    {
+                        if (FlowRateByFuel[fuel] > 0)
+                        {
+                            var time = FuelSources[fuel] / FlowRateByFuel[fuel];
+                            if (time < burnTime)
+                                burnTime = time;
+                        }
+                    }
+                }
+
+                if (burnTime > 0 && burnTime != double.MaxValue)
+                { //subtract masses.
+                    foreach (var type in fueltypes)
+                    {
+                        if (FuelSources[type] > SimManager.RESOURCE_MIN)
+                        {
+                            var sub = burnTime * FlowRateByFuel[type];
+                            mass -= sub * PartResourceLibrary.Instance.GetDefinition(type).density;
+                            FuelSources[type] -= sub;
+                        }
+                    }
+                }
+
+                if (log != null)
+                {
+                    log.AppendLine("**RCS STEP " + loopcount);
+                    //log.AppendLine("   burnTime = ", burnTime);
+                    log.AppendLine("   StartMass = ", startmass);
+                    log.AppendLine("   StepEndMass = ", mass);
+                    foreach (var type in fueltypes)
+                    {
+                        log.AppendLine("   **Fuel " + type);
+                        log.AppendLine("      FuelMass = ", FuelSources[type]);
+                        log.AppendLine("      FlowRateByFuel = ", FlowRateByFuel[type]);
+                        log.AppendLine("      IspFlowRateByFuel = ", IspFlowRateByFuel[type]);
+                        log.AppendLine("      thrustByFuel = ", thrustByFuel[type]);
+                        log.AppendLine("      fuelDensity = ", PartResourceLibrary.Instance.GetDefinition(type).density);
+                    }
+                }
+
+                if (startmass == mass) //we done here.
+                    break;
+
+                var isp = combinedIspFlowRate > 0 && combinedFlowRate > 0 ? combinedIspFlowRate / combinedFlowRate : 0;
+                deltav += (float)((isp * BasicDeltaV.GRAVITY * Math.Log(startmass / mass)));
+
+                loopcount++;
+
+                if (loopcount == 1000)
+                {
+                    break;
+                }
+
+            }
+
+            RCSDeltaV = deltav;
+        }
+
+        // This function does all the hard work of working out which engines are burning, which tanks are being drained 
+        // and setting the drain rates
+        private void UpdateResourceDrains()
 		{
 			// Update the active engines
 			UpdateActiveEngines();
@@ -1033,7 +1248,7 @@ namespace BasicDeltaV.Simulation
 
 		// This function activates the next stage
 		// currentStage must be updated before calling this function
-		private void ActivateStage()
+		private void ActivateStage(bool last)
 		{
 			// Build a set of all the parts that will be decoupled
 			decoupledParts.Clear();
@@ -1065,8 +1280,23 @@ namespace BasicDeltaV.Simulation
 						}
 					}
 				}
-				// If it is a fuel line then remove it from the list of all fuel lines
-				if (partSim.isFuelLine)
+
+                if (partSim.isRCS)
+                {
+                    // If it is an rcs engine then loop through all the rcs modules and remove all the ones from this rcs part
+                    for (int i = allRCS.Count - 1; i >= 0; i--)
+                    {
+                        RCSSim rcs = allRCS[i];
+                        if (rcs.partSim == partSim)
+                        {
+                            allRCS.RemoveAt(i);
+                            rcs.Release();
+                        }
+                    }
+                }
+
+                // If it is a fuel line then remove it from the list of all fuel lines
+                if (partSim.isFuelLine)
 				{
 					allFuelLines.Remove(partSim);
 				}
@@ -1079,15 +1309,36 @@ namespace BasicDeltaV.Simulation
 				allParts[i].RemoveAttachedParts(decoupledParts);
 			}
 
+            bool anyActive = false;
+
 			// Now we loop through all the engines and activate those that are ignited in this stage
 			for (int i = 0; i < allEngines.Count; ++i)
 			{
 				EngineSim engine = allEngines[i];
 				if (engine.partSim.inverseStage == currentStage)
 				{
-					engine.isActive = true;
+					engine.isActive = last ? engine.isOperational : true;
 				}
+                else if (!last && engine.partSim.inverseStage > currentStage)
+                {
+                    engine.isActive = true;
+                }
+
+                if (engine.isActive)
+                    anyActive = true;
 			}
+
+            if (last && !anyActive)
+            {
+                for (int i = 0; i < allEngines.Count; i++)
+                {
+                    EngineSim engine = allEngines[i];
+                    if (engine.partSim.inverseStage == currentStage)
+                    {
+                        engine.isActive = true;
+                    }
+                }
+            }
 		}
 
 		public void Dump()

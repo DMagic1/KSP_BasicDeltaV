@@ -35,6 +35,7 @@ namespace BasicDeltaV.Simulation
 
         public double actualThrust = 0;
         public bool isActive = false;
+        public bool isOperational = false;
         public double isp = 0;
         public PartSim partSim;
         public List<AppliedForce> appliedForces = new List<AppliedForce>();
@@ -113,6 +114,7 @@ namespace BasicDeltaV.Simulation
             engineSim.actualThrust = 0.0;
             engineSim.partSim = theEngine;
             engineSim.isActive = active;
+            engineSim.isOperational = active;
             engineSim.thrustVec = vecThrust;
             engineSim.isFlamedOut = isFlamedOut;
             engineSim.resourceConsumptions.Reset();
@@ -130,7 +132,7 @@ namespace BasicDeltaV.Simulation
                 engineSim.isp = atmosphereCurve.Evaluate((float)atmosphere);
                 engineSim.fullThrust = GetThrust(maxFuelFlow * flowModifier, engineSim.isp);
                 engineSim.thrust = GetThrust(Mathf.Lerp(minFuelFlow, maxFuelFlow, GetThrustPercent(thrustPercentage)) * flowModifier, engineSim.isp);
-                engineSim.actualThrust = engineSim.isActive ? resultingThrust : 0.0;
+                engineSim.actualThrust = engineSim.isActive ? resultingThrust : engineSim.thrust;
                 if (log != null)
                 {
                     log.buf.AppendFormat("flowMod = {0:g6}\n", flowModifier);
