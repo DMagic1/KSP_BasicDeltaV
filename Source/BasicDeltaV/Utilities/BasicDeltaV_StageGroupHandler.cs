@@ -23,6 +23,7 @@
  */
 #endregion
 
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using KSP.UI.Screens;
@@ -39,14 +40,12 @@ namespace BasicDeltaV
 
 		private StageGroup group;
 
+        private const float REFRESH_RATE = 0.333f;
+        private bool _resetStagePanelInfo;
+
 		private void Start()
 		{
-			if (HighLogic.LoadedSceneIsEditor && !BasicDeltaV.ReadoutsAvailable)
-			{
-				Destroy(this);
-				return;
-			}
-			else if (HighLogic.LoadedSceneIsFlight && !BasicDeltaV.ReadoutsAvailable)
+			if (!HighLogic.LoadedSceneIsFlight)
 			{
 				Destroy(this);
 				return;
@@ -56,12 +55,65 @@ namespace BasicDeltaV
 
 			if (group != null)
 				OnStageGroupAwake.Invoke(group);
+
+            StartCoroutine(WaitForPanelRefresh());
+
+            GameEvents.onDeltaVAppInfoItemsChanged.Add(DeltaVCalcsCompleted);
 		}
 
-		private void OnDestroy()
+        private IEnumerator WaitForPanelRefresh()
+        {
+            WaitForSeconds wait = new WaitForSeconds(REFRESH_RATE);
+            WaitForEndOfFrame frame = new WaitForEndOfFrame();
+
+            yield return null;
+
+            while (group != null)
+            {
+                if (!group.InfoPanelStockDisplayEnabled)
+                    group.EnableStockInfoPanelDisplays();
+
+                yield return frame;
+
+                //if (group.InfoPanelStockDisplayEnabled)
+                //    group.DisableStockInfoPanelDisplays();
+
+                _resetStagePanelInfo = true;
+
+                yield return wait;
+            }
+        }
+
+        private void DeltaVCalcsCompleted()
+        {
+            if (!group.InfoPanelStockDisplayEnabled)
+                group.EnableStockInfoPanelDisplays();
+
+            _resetStagePanelInfo = true;
+        }
+
+        private void LateUpdate()
+        {
+            if (group == null)
+                return;
+
+            if (!_resetStagePanelInfo)
+                return;
+
+            _resetStagePanelInfo = false;
+
+            if (group.InfoPanelStockDisplayEnabled)
+                group.DisableStockInfoPanelDisplays();
+        }
+
+        private void OnDestroy()
 		{
 			if (group != null)
 				OnStageGroupDestroy.Invoke(group);
-		}
+
+            group = null;
+
+            GameEvents.onDeltaVAppInfoItemsChanged.Remove(DeltaVCalcsCompleted);
+        }
 	}
 }
