@@ -109,8 +109,10 @@ namespace BasicDeltaV
                 {
                     if (fields[i].Name == "situationPrefab")
                         situationPrefab = fields[i].GetValue(dvApp) as DeltaVAppSituation;
-                    else if (fields[i].Name == "appHeightSituation")
-                        fields[i].SetValue(dvApp, 201);
+                    //else if (fields[i].Name == "appHeightSituation")
+                    //    fields[i].SetValue(dvApp, 201);
+                    else if (fields[i].Name == "appHeightStageInfo")
+                        fields[i].SetValue(dvApp, 130);
                 }
 
                 if (situationPrefab != null)
@@ -139,11 +141,9 @@ namespace BasicDeltaV
                 for (int i = fields.Length - 1; i >= 0; i--)
                 {
                     if (fields[i].Name == "stageInfoPrefab")
-                    {
                         stageInfoPrefab = fields[i].GetValue(dvApp) as DeltaVAppStageInfo;
-
-                        break;
-                    }
+                    else if (fields[i].Name == "appHeightStageInfo")
+                        fields[i].SetValue(dvApp, 130);
                 }
 
                 if (stageInfoPrefab != null)
