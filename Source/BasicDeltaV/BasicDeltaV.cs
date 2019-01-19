@@ -441,7 +441,8 @@ namespace BasicDeltaV
                 {
                     Stage stage = GetStage(_dvSliders.At(i).StageIndex);
 
-                    _dvSliders.At(i).UpdateSliderDV((float)stage.deltaV, (float)stage.stageStartDeltaV);
+                    if (stage != null)
+                        _dvSliders.At(i).UpdateSliderDV((float)stage.deltaV, (float)stage.stageStartDeltaV);
                 }
 
                 return;
@@ -459,7 +460,8 @@ namespace BasicDeltaV
             {
                 Stage stage = GetStage(_dvSliders.At(i).StageIndex);
 
-                _dvSliders.At(i).UpdateSliderDV((float)stage.deltaV, (float)stage.stageStartDeltaV);
+                if (stage != null)
+                    _dvSliders.At(i).UpdateSliderDV((float)stage.deltaV, (float)stage.stageStartDeltaV);
             }
         }
 
@@ -664,8 +666,6 @@ namespace BasicDeltaV
                                         toggles[j].isOn = false;
                                 }
                                 
-                                BasicLogging("Setting dv toggle situation: {0}", situation);
-
                                 break;
                             }
                         }
@@ -704,9 +704,7 @@ namespace BasicDeltaV
                         else
                             toggles[j].isOn = false;
                     }
-
-                    BasicLogging("Setting dv toggle situation after switch: {0}", situation);
-
+                    
                     break;
                 }
             }
@@ -1000,6 +998,11 @@ namespace BasicDeltaV
                 , ((DeltaVStageInfo s, DeltaVSituationOptions situation) => GetStageRCS(s).ToString("0"))
                 , "m/s" , BasicDeltaV_Settings.Instance.ShowRCS));
 
+            dvAppValues.infoLines.Add(new DeltaVAppValues.InfoLine(
+                "Torque", "Torque", "Torque",
+                 ((DeltaVStageInfo s, DeltaVSituationOptions situation) => GetStageTorque(s))
+                 , "", BasicDeltaV_Settings.Instance.ShowTorque));
+
             _rcsProcessed = true;
         }
         
@@ -1011,6 +1014,21 @@ namespace BasicDeltaV
                 return 0;
             else
                 return (float)stage.RCSdeltaVStart;
+        }
+
+        private string GetStageTorque(DeltaVStageInfo s)
+        {
+            Stage stage = GetStage(s.stage);
+
+            float torque = 0;
+
+            if (stage != null)
+                torque = (float)stage.maxThrustTorque;
+
+            if (torque > 1000)
+                return string.Format("{0}MNm", (torque / 1000).ToString("N1"));
+            else
+                return string.Format("{0}kNm", torque.ToString("0"));
         }
 
         private void TriggerSimulator()
