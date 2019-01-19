@@ -40,6 +40,8 @@ namespace BasicDeltaV
         [Persistent]
         public bool ShowRCS = true;
         [Persistent]
+        public bool ShowTorque = true;
+        [Persistent]
         public int VABSituation = 0;
         [Persistent]
         public int SPHSituation = 0;
