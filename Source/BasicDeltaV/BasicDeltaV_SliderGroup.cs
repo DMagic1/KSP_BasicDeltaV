@@ -27,6 +27,9 @@ namespace BasicDeltaV
 
         public BasicDeltaV_SliderGroup(StageGroup group)
         {
+            if (group == null)
+                return;
+
             var images = group.GetComponentsInChildren<Image>();
 
             Image deltaVImage = null;
@@ -43,14 +46,15 @@ namespace BasicDeltaV
 
             if (deltaVImage == null)
                 return;
-
-            GameObject dvBackground = new GameObject("DeltaVBackground", new Type[3] { typeof(Image), typeof(RectTransform), typeof(CanvasRenderer) });
-
+            
+            GameObject dvBackground = new GameObject("DeltaVBackground", new Type[1] { typeof(Image) });
+            
             dvBackground.transform.SetParent(deltaVImage.transform, false);
             dvBackground.transform.SetAsFirstSibling();
             dvBackground.layer = 5;
 
             Image dvBackgroundImage = dvBackground.GetComponent<Image>();
+            
             dvBackgroundImage.sprite = deltaVImage.sprite;
             dvBackgroundImage.color = new Color32(11, 166, 255, 255);
             dvBackgroundImage.rectTransform.anchorMax = deltaVImage.rectTransform.anchorMax;
@@ -60,7 +64,7 @@ namespace BasicDeltaV
             dvBackgroundImage.rectTransform.anchoredPosition3D = deltaVImage.rectTransform.anchoredPosition3D;
 
             Slider dvSlider = deltaVImage.gameObject.AddComponent<Slider>();
-
+            
             dvSlider.interactable = false;
             dvSlider.navigation = new Navigation() { mode = Navigation.Mode.None };
             dvSlider.fillRect = dvBackgroundImage.rectTransform;
@@ -74,14 +78,17 @@ namespace BasicDeltaV
 
             _stageDVSlider = dvSlider;
             _group = group;
-            
+
             if (BasicDeltaV_Settings.Instance.ShowDVSliders)
             {
                 _active = true;
                 Stage stage = BasicDeltaV.Instance.GetStage(_group.inverseStageIndex);
 
-                _stageDVSlider.maxValue = (float)stage.stageStartDeltaV;
-                _stageDVSlider.value = (float)stage.deltaV;
+                if (stage != null)
+                {
+                    _stageDVSlider.maxValue = (float)stage.stageStartDeltaV;
+                    _stageDVSlider.value = (float)stage.deltaV;
+                }
             }
             else
             {
@@ -111,8 +118,11 @@ namespace BasicDeltaV
             {
                 Stage stage = BasicDeltaV.Instance.GetStage(_group.inverseStageIndex);
 
-                _stageDVSlider.maxValue = (float)stage.stageStartDeltaV;
-                _stageDVSlider.value = (float)stage.deltaV;
+                if (stage != null)
+                {
+                    _stageDVSlider.maxValue = (float)stage.stageStartDeltaV;
+                    _stageDVSlider.value = (float)stage.deltaV;
+                }
             }
             else
             {
