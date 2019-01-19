@@ -43,6 +43,10 @@ namespace BasicDeltaV
         private const float REFRESH_RATE = 0.333f;
         private bool _resetStagePanelInfo;
 
+        private bool _stageInfoSetup;
+
+        private Coroutine _panelRefresh;
+
 		private void Start()
 		{
 			if (!HighLogic.LoadedSceneIsFlight)
@@ -56,8 +60,9 @@ namespace BasicDeltaV
 			if (group != null)
 				OnStageGroupAwake.Invoke(group);
 
-            StartCoroutine(WaitForPanelRefresh());
+            _panelRefresh = StartCoroutine(WaitForPanelRefresh());
 
+            GameEvents.onDeltaVCalcsCompleted.Add(DeltaVCalcsCompleted);
             GameEvents.onDeltaVAppInfoItemsChanged.Add(DeltaVCalcsCompleted);
 		}
 
@@ -72,18 +77,24 @@ namespace BasicDeltaV
             {
                 if (!group.InfoPanelStockDisplayEnabled)
                     group.EnableStockInfoPanelDisplays();
+                
+                if (group.InfoPanelEnabled && !_stageInfoSetup)
+                {
+                    _stageInfoSetup = true;
+
+                    GameEvents.onDeltaVAppInfoItemsChanged.Fire();
+                }
 
                 yield return frame;
-
-                //if (group.InfoPanelStockDisplayEnabled)
-                //    group.DisableStockInfoPanelDisplays();
-
+                
                 _resetStagePanelInfo = true;
 
                 yield return wait;
             }
-        }
 
+            _panelRefresh = null;
+        }
+        
         private void DeltaVCalcsCompleted()
         {
             if (!group.InfoPanelStockDisplayEnabled)
@@ -96,6 +107,9 @@ namespace BasicDeltaV
         {
             if (group == null)
                 return;
+
+            if (_panelRefresh == null)
+                _panelRefresh = StartCoroutine(WaitForPanelRefresh());
 
             if (!_resetStagePanelInfo)
                 return;
@@ -113,6 +127,10 @@ namespace BasicDeltaV
 
             group = null;
 
+            if (_panelRefresh != null)
+                StopCoroutine(_panelRefresh);
+
+            GameEvents.onDeltaVCalcsCompleted.Remove(DeltaVCalcsCompleted);
             GameEvents.onDeltaVAppInfoItemsChanged.Remove(DeltaVCalcsCompleted);
         }
 	}
