@@ -655,7 +655,7 @@ namespace BasicDeltaV.Simulation
 
 			// If the part is fuel container for searched type of fuel (i.e. it has capability to contain that type of fuel and the fuel 
 			// type was not disabled) and it contains fuel, it adds itself.
-			if (checkMax ? (maxResources.HasType(type)) : (resources.HasType(type) && resourceFlowStates[type] > 0.0))
+			if (checkMax ? (maxResources.HasType(type) && maxResourceFlowStates[type] > 0) : (resources.HasType(type) && resourceFlowStates[type] > 0.0))
 			{
 				if (checkMax ? (maxResources[type] > SimManager.RESOURCE_MIN) : (resources[type] > resRequestRemainingThreshold))
 				{

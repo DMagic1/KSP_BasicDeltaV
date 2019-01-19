@@ -560,7 +560,7 @@ namespace BasicDeltaV.Simulation
                 switch ((ResourceFlowMode)this.resourceFlowModes[type])
                 {
                     case ResourceFlowMode.NO_FLOW:
-                        if (partSim.maxResources[type] > SimManager.RESOURCE_MIN)
+                        if (partSim.maxResources[type] > SimManager.RESOURCE_MIN && partSim.maxResourceFlowStates[type] != 0)
                         {
                             sourcePartSet.Add(partSim);
                         }
@@ -571,7 +571,7 @@ namespace BasicDeltaV.Simulation
                         for (int i = 0; i < allParts.Count; i++)
                         {
                             PartSim aPartSim = allParts[i];
-                            if (aPartSim.maxResources[type] > SimManager.RESOURCE_MIN)
+                            if (aPartSim.maxResources[type] > SimManager.RESOURCE_MIN && partSim.maxResourceFlowStates[type] != 0)
                             {
                                 sourcePartSet.Add(aPartSim);
                             }
@@ -594,7 +594,7 @@ namespace BasicDeltaV.Simulation
                             var aPartSim = allParts[i];
                             //if (log != null) log.Append(aPartSim.name, ":" + aPartSim.partId, " contains ", aPartSim.resources[type])
                             //                  .AppendLine((aPartSim.resourceFlowStates[type] == 0) ? " (disabled)" : "");
-                            if (aPartSim.maxResources[type] > SimManager.RESOURCE_MIN)
+                            if (aPartSim.maxResources[type] > SimManager.RESOURCE_MIN && partSim.maxResourceFlowStates[type] != 0)
                             {
                                 int stage = aPartSim.inverseStage;
                                 if (stage > maxStage)
