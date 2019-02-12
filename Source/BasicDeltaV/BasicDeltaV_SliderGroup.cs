@@ -57,11 +57,11 @@ namespace BasicDeltaV
             
             dvBackgroundImage.sprite = deltaVImage.sprite;
             dvBackgroundImage.color = new Color32(11, 166, 255, 255);
-            dvBackgroundImage.rectTransform.anchorMax = deltaVImage.rectTransform.anchorMax;
-            dvBackgroundImage.rectTransform.anchorMin = deltaVImage.rectTransform.anchorMin;
-            dvBackgroundImage.rectTransform.pivot = deltaVImage.rectTransform.pivot;
-            dvBackgroundImage.rectTransform.sizeDelta = deltaVImage.rectTransform.sizeDelta;
-            dvBackgroundImage.rectTransform.anchoredPosition3D = deltaVImage.rectTransform.anchoredPosition3D;
+            dvBackgroundImage.rectTransform.anchorMin = new Vector2(0, 0);
+            dvBackgroundImage.rectTransform.anchorMax = new Vector2(1, 1);
+            dvBackgroundImage.rectTransform.pivot = new Vector2(0, 1);
+            dvBackgroundImage.rectTransform.sizeDelta = new Vector2(0, 0);
+            dvBackgroundImage.rectTransform.anchoredPosition3D = new Vector3(0, 0, deltaVImage.rectTransform.anchoredPosition3D.z);
 
             Slider dvSlider = deltaVImage.gameObject.AddComponent<Slider>();
             
