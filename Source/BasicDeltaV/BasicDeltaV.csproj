@@ -51,7 +51,6 @@
     <Compile Include="Simulation\RCSSim.cs" />
     <Compile Include="Utilities\BasicDeltaV_DeltaVAppStageHandler.cs" />
     <Compile Include="Utilities\BasicDeltaV_DeltaVSituationHandler.cs" />
-    <Compile Include="Utilities\BasicDeltaV_GameParameters.cs" />
     <Compile Include="BasicDeltaV_Loader.cs" />
     <Compile Include="BasicDeltaV_Settings.cs" />
     <Compile Include="Utilities\BasicDeltaV_StageGroupHandler.cs" />
