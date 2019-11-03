@@ -125,7 +125,7 @@ namespace BasicDeltaV.Simulation
 			partSim.parentAttach = p.attachMode;
 			partSim.fuelCrossFeed = p.fuelCrossFeed;
 			partSim.noCrossFeedNodeKey = p.NoCrossFeedNodeKey;
-            partSim.isEnginePlate = IsEnginePlate(p);
+            partSim.isEnginePlate = p.HasModule<ModuleDecouplerBase>() && p.GetModule<ModuleDecouplerBase>().isEnginePlate;
             if (partSim.isEnginePlate)
                 partSim.noCrossFeedNodeKey = "bottom";
             partSim.decoupledInStage = partSim.DecoupledInStage(p);
@@ -868,11 +868,12 @@ namespace BasicDeltaV.Simulation
 
                     if (mdec != null)
                     {
-                        AttachNode att = thePart.FindAttachNode(mdec.explosiveNodeID);
                         if (mdec.isOmniDecoupler)
                             stage = thePart.inverseStage;
                         else
                         {
+                            AttachNode att = thePart.FindAttachNode(mdec.explosiveNodeID);
+
                             if (att != null)
                             {
                                 if ((thePart.parent != null && att.attachedPart == thePart.parent) || att.attachedPart.ContainedPart(chain))
@@ -908,19 +909,6 @@ namespace BasicDeltaV.Simulation
             }
             
             return stage;
-        }
-        
-        private static bool IsEnginePlate(Part thePart)
-        {
-            ModuleDecouple mdec = thePart.GetModule<ModuleDecouple>();
-            if (mdec != null && mdec.IsStageable())
-            {
-                ModuleDynamicNodes mdyn = thePart.GetModule<ModuleDynamicNodes>();
-                if (mdyn != null)
-                    return true;
-            }
-
-            return false;
         }
 	}
 }
