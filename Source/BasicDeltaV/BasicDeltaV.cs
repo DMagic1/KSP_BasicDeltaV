@@ -563,9 +563,12 @@ namespace BasicDeltaV
 
             if (_updateStages)
             {
-                //Profiler.BeginSample("DV Event");
-                GameEvents.onDeltaVCalcsCompleted.Fire();
-                //Profiler.EndSample();
+                if (stagesCount > 0)
+                {
+                    //Profiler.BeginSample("DV Event");
+                    GameEvents.onDeltaVCalcsCompleted.Fire();
+                    //Profiler.EndSample();
+                }
 
                 _updateStages = false;
             }
