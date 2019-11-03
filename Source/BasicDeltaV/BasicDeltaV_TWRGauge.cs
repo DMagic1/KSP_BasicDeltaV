@@ -66,8 +66,8 @@ namespace BasicDeltaV
             GameEvents.onTooltipSpawned.Add(TooltipSpawned);
             GameEvents.onTooltipDespawned.Add(TooltipDespawned);
 
-            GameEvents.OnMapEntered.Add(OnMapEnter);
-            GameEvents.OnMapExited.Add(OnMapExit);
+            //GameEvents.OnMapEntered.Add(OnMapEnter);
+            //GameEvents.OnMapExited.Add(OnMapExit);
             GameEvents.OnFlightUIModeChanged.Add(OnFlightModeChange);
         }
 
@@ -76,8 +76,8 @@ namespace BasicDeltaV
             GameEvents.onTooltipSpawned.Remove(TooltipSpawned);
             GameEvents.onTooltipDespawned.Remove(TooltipDespawned);
 
-            GameEvents.OnMapEntered.Remove(OnMapEnter);
-            GameEvents.OnMapExited.Remove(OnMapExit);
+            //GameEvents.OnMapEntered.Remove(OnMapEnter);
+            //GameEvents.OnMapExited.Remove(OnMapExit);
             GameEvents.OnFlightUIModeChanged.Remove(OnFlightModeChange);
         }
 
